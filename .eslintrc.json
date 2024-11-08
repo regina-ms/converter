@@ -1,3 +1,46 @@
 {
-  "extends": ["next/core-web-vitals", "next/typescript"]
+  "extends": [
+    "next/core-web-vitals"
+  ],
+  "plugins": [
+    "eslint-plugin-react",
+    "@typescript-eslint",
+    "unused-imports"
+  ],
+  "parserOptions": {
+    "project": ["./tsconfig.json"]
+  },
+  "parser": "@typescript-eslint/parser",
+  "rules": {
+    "no-use-before-define": "off",
+    "@typescript-eslint/no-use-before-define": "error",
+    "react/jsx-curly-brace-presence": [
+      "error",
+      "never"
+    ],
+    "no-console": [
+      "error",
+      {
+        "allow": [
+          "warn",
+          "error",
+          "info"
+        ]
+      }
+    ],
+    "no-duplicate-imports": "error",
+    "@typescript-eslint/no-misused-promises": [
+      "error",
+      {
+        "checksVoidReturn": {
+          "arguments": false,
+          "attributes": false
+        }
+      }
+    ],
+    "unused-imports/no-unused-imports": "off",
+    "react/jsx-key": ["error"]
+  },
+  "ignorePatterns": ["**/*.md"]
 }
+

@@ -1,5 +1,5 @@
 import '@/styles/globals.css'
-import { Ubuntu_Condensed } from 'next/font/google'
+import { Ubuntu_Condensed, Roboto_Condensed, Inter, Roboto } from 'next/font/google'
 
 const ubuntuCondensed = Ubuntu_Condensed({
   display: 'swap',
@@ -8,10 +8,33 @@ const ubuntuCondensed = Ubuntu_Condensed({
   weight: '400',
 })
 
+const robotoCondensed = Roboto_Condensed({
+  display: 'swap',
+  variable: '--font-roboto_condensed',
+  subsets: ['cyrillic'],
+})
+
+const inter = Inter({
+  display: 'swap',
+  variable: '--font-inter',
+  subsets: ['cyrillic'],
+})
+
+const roboto = Roboto({
+  display: 'swap',
+  variable: '--font-roboto',
+  subsets: ['cyrillic'],
+  weight: '500',
+})
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang='ru'>
-      <body className={`${ubuntuCondensed.variable} font-ubuntu_condensed`}>{children}</body>
+      <body
+        className={`${ubuntuCondensed.variable} ${robotoCondensed.variable} ${inter.variable} ${roboto.variable} font-ubuntu_condensed`}
+      >
+        {children}
+      </body>
     </html>
   )
 }
