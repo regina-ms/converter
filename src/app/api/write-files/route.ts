@@ -4,17 +4,17 @@ import { Buffer } from 'node:buffer'
 export async function POST(request: Request) {
   const formData = await request.formData()
   const response = {
-    status: 'ok',
+    status: 'yes',
   }
   formData.forEach((data) => {
     const file = data as File
     file.arrayBuffer().then((res) => {
       const buffer = Buffer.from(res)
       try {
-        if (!existsSync('data')) {
-          fs.mkdirSync('data')
+        if (!existsSync('public/data')) {
+          fs.mkdirSync('public/data')
         }
-        fs.writeFileSync(`data/${file.name}`, buffer)
+        fs.writeFileSync(`public/data/${file.name}`, buffer)
       } catch {
         response.status = 'error'
       }
