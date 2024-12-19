@@ -1,5 +1,6 @@
 import '@/styles/globals.css'
 import { Ubuntu_Condensed, Roboto_Condensed, Inter, Roboto } from 'next/font/google'
+import { ManipulationContextProvider } from '@/features/ManipulationContext'
 
 const ubuntuCondensed = Ubuntu_Condensed({
   display: 'swap',

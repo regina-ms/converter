@@ -38,7 +38,7 @@ export default {
       'header-200': [
         adaptiveFz(1.8),
         {
-          lineHeight: '21',
+          lineHeight: '21px',
         },
       ],
       default: [

@@ -8,7 +8,7 @@ export const BUTTONS = {
   manipulate: [
     {
       value: 'convert',
-        text:
+      text: 'Конвертировать',
     },
   ],
 }
