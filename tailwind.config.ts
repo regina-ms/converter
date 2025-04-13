@@ -5,11 +5,7 @@ export function adaptiveFz(value: number, min = 1, max = 20, mod = 10) {
 }
 
 export default {
-  content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
+  content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     fontFamily: {
       ubuntu_condensed: ['var(--font-ubuntu_condensed)'],
@@ -27,12 +23,14 @@ export default {
         adaptiveFz(1.2),
         {
           lineHeight: '13px',
+          fontWeight: 200,
         },
       ],
       'header-100': [
         adaptiveFz(1.4),
         {
           lineHeight: '16px',
+          fontWeight: 600,
         },
       ],
       'header-200': [

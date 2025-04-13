@@ -1,5 +1,5 @@
-import fs, { existsSync } from 'node:fs'
 import { Buffer } from 'node:buffer'
+import fsAsync from 'node:fs/promises'
 
 export async function POST(request: Request) {
   const formData = await request.formData()
@@ -7,14 +7,12 @@ export async function POST(request: Request) {
     status: 'yes',
   }
   formData.forEach((data) => {
+    if (typeof data === 'string') return
     const file = data as File
-    file.arrayBuffer().then((res) => {
+    file.arrayBuffer().then(async (res) => {
       const buffer = Buffer.from(res)
       try {
-        if (!existsSync('public/data')) {
-          fs.mkdirSync('public/data')
-        }
-        fs.writeFileSync(`public/data/${file.name}`, buffer)
+        await fsAsync.writeFile(`${formData.get('path')}/${file.name}`, buffer)
       } catch {
         response.status = 'error'
       }

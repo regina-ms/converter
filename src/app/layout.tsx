@@ -1,6 +1,6 @@
 import '@/styles/globals.css'
 import { Ubuntu_Condensed, Roboto_Condensed, Inter, Roboto } from 'next/font/google'
-import { ManipulationContextProvider } from '@/features/ManipulationContext'
+import { ActionContextProvider } from '@/features/ActionContext'
 
 const ubuntuCondensed = Ubuntu_Condensed({
   display: 'swap',
@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body
         className={`${ubuntuCondensed.variable} ${robotoCondensed.variable} ${inter.variable} ${roboto.variable} font-ubuntu_condensed`}
       >
-        {children}
+        <ActionContextProvider>{children}</ActionContextProvider>
       </body>
     </html>
   )
