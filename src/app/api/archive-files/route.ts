@@ -1,6 +1,5 @@
 import fs from 'node:fs'
 import archiver from 'archiver'
-import fsAsync from 'node:fs/promises'
 
 export async function POST(request: Request) {
   const output = fs.createWriteStream('public/result.zip')
@@ -28,7 +27,6 @@ export async function POST(request: Request) {
 
   archive.pipe(output)
 
-  const files = await fsAsync.readdir('public/output')
   archive.directory('public/output/', 'new-subdir')
 
   await archive.finalize()

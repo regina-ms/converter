@@ -3,7 +3,6 @@ import React, { useContext, useState } from 'react'
 import { Action, ACTIONS, RESULT_PATH } from '@/constants'
 import { ActionContext } from '@/features/ActionContext'
 import ActionButton from '@/ui/ActionButton'
-import { archiveFiles } from '@/methods/archiveFiles'
 import Link from 'next/link'
 
 function Actions() {
@@ -30,7 +29,7 @@ function Actions() {
       <div className={`font-roboto_condensed text-header-100`}>Манипулирование</div>
       <ul className={`flex flex-col gap-[5px]`}>{showActionButtons()}</ul>
       {output.data.length ? (
-        <Link href={RESULT_PATH} target={'_blank'} download={true} className={`bg-base-button-brown`}>
+        <Link href={'result.zip'} target={'_blank'} download={true} className={`bg-base-button-brown`}>
           Сохранить
         </Link>
       ) : null}

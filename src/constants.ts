@@ -46,4 +46,4 @@ export const PUBLIC_PATHS = {
   output: 'public/output',
 }
 
-export const RESULT_PATH = 'public/result.zip'
+export const RESULT_PATH = '/public/result.zip'
