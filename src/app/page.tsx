@@ -5,12 +5,11 @@ import { writeFiles } from '@/methods/writeFiles'
 import Actions from '@/components/Actions'
 import { ImageData } from '@/app/api/get-files/route'
 import { PATHS, PUBLIC_PATHS } from '@/constants'
-import { ActionOptions } from '@/components/ActionOptions'
 import { ActionContext } from '@/features/ActionContext'
 import FileList from '@/components/FileList'
 import { deleteFile } from '@/methods/deleteFile'
 import { HiddenFileInput } from '@/components/HiddenFileInput'
-import { Box, Stack } from '@mui/material'
+import { Box } from '@mui/material'
 
 export default function Page() {
   const { input } = useContext(ActionContext)

@@ -11,5 +11,3 @@ export const PUBLIC_PATHS = {
 }
 
 export const RESULT_PATH = `/${PUBLIC_FOLDER}/result.zip`
-
-export const IMAGE_TYPES = ['png', 'webp', 'jpeg']

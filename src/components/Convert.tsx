@@ -1,47 +1,47 @@
 'use client'
 
-import { Box, FormControl, FormLabel, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material'
+import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material'
 import { useContext, useEffect, useState } from 'react'
 import { ActionContext } from '@/features/ActionContext'
-import { IMAGE_TYPES } from '@/constants'
+import { FORMATS_ARRAY } from '@/actionsTypes'
+import { ConvertOptions } from '@/components/ConvertOptions'
 
 function Convert() {
   const { _setActions } = useContext(ActionContext)
+  const [options, setOptions] = useState()
 
-  const [format, setFormat] = useState('')
-  const [options, setOptions] = useState<any[]>([])
+  const [selectedFormat, setSelectedFormat] = useState<(typeof FORMATS_ARRAY)[number] | ''>('')
+
   const selectHandler = (e: SelectChangeEvent) => {
-    setFormat(e.target.value)
+    setSelectedFormat((e.target.value as (typeof FORMATS_ARRAY)[number]) || '')
   }
 
   useEffect(() => {
-    switch (format) {
+    switch (selectedFormat) {
       case 'png':
-        const opt1 = {
-          name: 'Уровень сжатия. Число от 0 до 9',
-          value: 'compressionLevel',
-        }
     }
-  }, [format])
+  }, [selectedFormat])
 
   return (
     <>
       <FormControl sx={{ width: '100%' }}>
-        <InputLabel id='demo-select-small-label'>Конвертировать в</InputLabel>
+        <InputLabel id='convert-type'>Конвертировать в</InputLabel>
         <Select
-          id='demo-select-small'
-          labelId='demo-select-small-label'
+          labelId='convert-type'
           label='Конвертировать в'
-          value={format}
+          value={selectedFormat}
           onChange={selectHandler}
           fullWidth
         >
-          <MenuItem value='' />
-          {IMAGE_TYPES.map((type) => {
-            return <MenuItem value={type}>{type}</MenuItem>
-          })}
+          <MenuItem value={''}>
+            <em>не конвертировать</em>
+          </MenuItem>
+          {FORMATS_ARRAY.map((value) => (
+            <MenuItem value={value}>{value}</MenuItem>
+          ))}
         </Select>
       </FormControl>
+      {selectedFormat && <ConvertOptions format={selectedFormat} />}
     </>
   )
 }

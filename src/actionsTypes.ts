@@ -1,3 +1,12 @@
+const FORMATS = {
+  png: 'png' as const,
+  webp: 'webp' as const,
+  jpeg: 'jpeg' as const,
+  gif: 'gif' as const,
+}
+
+export const FORMATS_ARRAY = Object.values(FORMATS)
+
 export type Action = {
   id: string
   data: ConvertAction | ResizeAction
@@ -15,14 +24,14 @@ export type Options<FormatTypeOptions> = {
 } & FormatTypeOptions
 
 export type Png = {
-  type: 'png'
+  type: (typeof FORMATS)['png']
   options: {
     compressionLevel: number // Уровень сжатия. Число от 0 до 9
   }
 }
 
 export type Webp = {
-  type: 'webp'
+  type: (typeof FORMATS)['webp']
   options: {
     alphaQuality: number // Качество прозрачности (альфа-канала). Число от 0 до 100.
     compressionMode: 'lossless' | 'nearLossless' //Уровень сжатия. lossless - без потерь, nearLossless - почти без потерь
@@ -30,7 +39,7 @@ export type Webp = {
 }
 
 export type Jpeg = {
-  type: 'jpeg'
+  type: (typeof FORMATS)['jpeg']
   options: {}
 }
 
