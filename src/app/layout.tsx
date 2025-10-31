@@ -1,6 +1,9 @@
-import '@/styles/globals.css'
 import { Ubuntu_Condensed, Roboto_Condensed, Inter, Roboto } from 'next/font/google'
 import { ActionContextProvider } from '@/features/ActionContext'
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter'
+import { ThemeProvider } from '@mui/material/styles'
+import theme from '../theme'
+import { Container, CssBaseline } from '@mui/material'
 
 const ubuntuCondensed = Ubuntu_Condensed({
   display: 'swap',
@@ -25,16 +28,19 @@ const roboto = Roboto({
   display: 'swap',
   variable: '--font-roboto',
   subsets: ['cyrillic'],
-  weight: '500',
+  weight: ['300', '400', '500', '700'],
 })
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang='ru'>
-      <body
-        className={`${ubuntuCondensed.variable} ${robotoCondensed.variable} ${inter.variable} ${roboto.variable} font-ubuntu_condensed`}
-      >
-        <ActionContextProvider>{children}</ActionContextProvider>
+      <body className={`${ubuntuCondensed.variable} ${robotoCondensed.variable} ${inter.variable} ${roboto.variable}`}>
+        <CssBaseline />
+        <ActionContextProvider>
+          <ThemeProvider theme={theme}>
+            <Container sx={{ height: '100svh' }}>{children}</Container>
+          </ThemeProvider>
+        </ActionContextProvider>
       </body>
     </html>
   )

@@ -16,16 +16,7 @@ export async function POST(request: Request) {
   const _fileName = Array.from<Array<string>>(fileName.matchAll(/(.+)(\..+$)/g))[0][1]
   const inputFile = await fsAsync.readFile(`${PUBLIC_PATHS.input}/${fileName}`)
 
-  switch (format) {
-    case 'webp':
-      await sharp(inputFile).webp().withMetadata().toFile(`${PUBLIC_PATHS.output}/${_fileName}.${format}`)
-      break
-    case 'png':
-      await sharp(inputFile).png().withMetadata().toFile(`${PUBLIC_PATHS.output}/${_fileName}.${format}`)
-      break
-    default:
-      await sharp(inputFile).jpeg().withMetadata().toFile(`${PUBLIC_PATHS.output}/${_fileName}.${format}`)
-  }
+  await sharp(inputFile).keepMetadata().toFormat(format).toFile(`${PUBLIC_PATHS.output}/${_fileName}.${format}`)
 
   return Response.json({ data: 'ok' })
 }

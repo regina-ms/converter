@@ -10,5 +10,9 @@ export async function writeFiles(files: File[], path: string = PUBLIC_PATHS.inpu
     method: 'POST',
     body: data,
   })
-  return res.json()
+
+  const a = res
+
+  console.log(a)
+  return a
 }

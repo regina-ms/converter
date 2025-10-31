@@ -1,45 +1,48 @@
 'use client'
-import React, { Fragment, useContext, useEffect, useState } from 'react'
-import ActionButton from '@/ui/ActionButton'
-import { ACTIONS } from '@/constants'
+
+import { Box, FormControl, FormLabel, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material'
+import { useContext, useEffect, useState } from 'react'
 import { ActionContext } from '@/features/ActionContext'
-import { convertFile } from '@/methods/convertFile'
-import { archiveFiles } from '@/methods/archiveFiles'
+import { IMAGE_TYPES } from '@/constants'
 
 function Convert() {
-  const data = ACTIONS.find((action) => action.type === 'convert')
-  const [format, setFormat] = useState<string>(data?.options[0] || '')
-  const { input, output } = useContext(ActionContext)
+  const { _setActions } = useContext(ActionContext)
 
-  const onBtnClick = () => {
-    input.data.forEach((image) => {
-      convertFile(image.name, format).then(output.set).then(archiveFiles)
-    })
+  const [format, setFormat] = useState('')
+  const [options, setOptions] = useState<any[]>([])
+  const selectHandler = (e: SelectChangeEvent) => {
+    setFormat(e.target.value)
   }
 
+  useEffect(() => {
+    switch (format) {
+      case 'png':
+        const opt1 = {
+          name: 'Уровень сжатия. Число от 0 до 9',
+          value: 'compressionLevel',
+        }
+    }
+  }, [format])
+
   return (
-    <Fragment>
-      <div className={`mb-[10px] text-header-200`}>{data?.name}</div>
-      <div className={`flex items-center gap-[6px] text-[13px]`}>
-        <div>Формат</div>
-        <select
-          className={`w-full max-w-[211px] rounded-[4px] border border-[#C9CCD6] px-[9px] py-[6px]`}
-          onChange={(e) => setFormat(e.target.value)}
+    <>
+      <FormControl sx={{ width: '100%' }}>
+        <InputLabel id='demo-select-small-label'>Конвертировать в</InputLabel>
+        <Select
+          id='demo-select-small'
+          labelId='demo-select-small-label'
+          label='Конвертировать в'
+          value={format}
+          onChange={selectHandler}
+          fullWidth
         >
-          {data?.options.map((item, index) => (
-            <option key={index} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
-      </div>
-      <ActionButton
-        className={`mt-[12px] rounded-[12px] bg-base-button-brown px-[15px] py-[10.5px]`}
-        action={onBtnClick}
-      >
-        Вперед
-      </ActionButton>
-    </Fragment>
+          <MenuItem value='' />
+          {IMAGE_TYPES.map((type) => {
+            return <MenuItem value={type}>{type}</MenuItem>
+          })}
+        </Select>
+      </FormControl>
+    </>
   )
 }
 

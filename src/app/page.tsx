@@ -3,12 +3,14 @@ import React, { useContext, useEffect, useState } from 'react'
 import { getFiles } from '@/methods/getFiles'
 import { writeFiles } from '@/methods/writeFiles'
 import Actions from '@/components/Actions'
-import InputFiles from '@/components/InputFiles'
 import { ImageData } from '@/app/api/get-files/route'
 import { PATHS, PUBLIC_PATHS } from '@/constants'
 import { ActionOptions } from '@/components/ActionOptions'
 import { ActionContext } from '@/features/ActionContext'
-import Input from '@/components/Input'
+import FileList from '@/components/FileList'
+import { deleteFile } from '@/methods/deleteFile'
+import { HiddenFileInput } from '@/components/HiddenFileInput'
+import { Box, Stack } from '@mui/material'
 
 export default function Page() {
   const { input } = useContext(ActionContext)
@@ -31,20 +33,26 @@ export default function Page() {
     getImageData()
   }, [input])
 
-  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return
     writeFiles([...e.target.files]).then(input.set)
   }
 
-  if (!input.data.length) return <Input onChange={onChange} />
+  const _deleteFile = (fileName: string) => {
+    deleteFile(fileName).then(input.set)
+  }
+
+  if (!input.data.length)
+    return <HiddenFileInput width={'100%'} height={'100%'} onFileInputChange={onFileInputChange} />
 
   return (
-    <div className={`flex size-full h-svh`}>
-      {/*<Actions />*/}
-      <div className={`w-full border-l border-r border-l-base-button-green border-r-base-button-green p-[15px]`}>
-        <InputFiles files={imageData} />
-      </div>
-      {/*<ActionOptions />*/}
-    </div>
+    <>
+      <Box sx={{ marginY: 6 }}>
+        <HiddenFileInput onFileInputChange={onFileInputChange} />
+        <Actions />
+      </Box>
+
+      <FileList files={imageData} deleteFile={_deleteFile} />
+    </>
   )
 }

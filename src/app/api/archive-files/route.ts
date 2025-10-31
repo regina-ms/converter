@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import archiver from 'archiver'
+import { PUBLIC_FOLDER } from '@/constants'
 
 export async function POST(request: Request) {
   const output = fs.createWriteStream('public/result.zip')
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
 
   archive.pipe(output)
 
-  archive.directory('public/output/', 'new-subdir')
+  archive.directory(`${PUBLIC_FOLDER}/output/`, 'new-subdir')
 
   await archive.finalize()
 
