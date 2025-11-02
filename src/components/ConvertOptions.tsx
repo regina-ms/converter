@@ -1,35 +1,35 @@
 'use client'
-
-import { ConvertActionType, FORMATS_ARRAY, Png } from '@/actionsTypes'
-import { FormControl, InputLabel, MenuItem, Select } from '@mui/material'
-import { useState } from 'react'
+import { FORMATS_ARRAY, GeneralOptions, JpegOptions, PngOptions, WebpOptions } from '@/actionsTypes'
+import { Box, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material'
 
 type ConvertOptionsProps = {
   format: (typeof FORMATS_ARRAY)[number]
+  options: (PngOptions[number] | WebpOptions[number] | JpegOptions[number] | GeneralOptions[number])[]
 }
 
-export function ConvertOptions({ format }: ConvertOptionsProps) {
-  const defaultOptions: ConvertActionType<Png>['options'] = {
-    quality: 80,
-    compressionLevel: 0,
+export function ConvertOptions({ format, options }: ConvertOptionsProps) {
+  //console.log(options)
+  const selectHandler = (e: SelectChangeEvent) => {
+    const target = Number(e.target.value)
+    const name = e.target.name
   }
-
-  const [options, setOptions] = useState(defaultOptions)
 
   function showOptions() {
-    switch (format) {
-      case 'png':
-        return (
-          <FormControl variant='standard'>
-            <InputLabel id='png-opt-compess-level'>Уровень сжатия</InputLabel>
-            <Select>
-              {Array.from({ length: 9 }, (_, index) => index + 1).map((value) => (
-                <MenuItem value={value}>{value}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )
-    }
+    return options.map((option) => {
+      switch (option.id) {
+        case 'compressionLevel':
+          return (
+            <FormControl variant='standard' fullWidth>
+              <InputLabel id={option.id}>{option.name}</InputLabel>
+              <Select labelId={option.id} value={option.value} label={option.name}>
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <MenuItem value={index + 1}>{index + 1}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )
+      }
+    })
   }
-  return <>{showOptions()}</>
+  return <Box sx={{ display: 'flex', gap: 8 }}>{showOptions()}</Box>
 }
