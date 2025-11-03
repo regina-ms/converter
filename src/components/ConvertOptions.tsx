@@ -1,35 +1,65 @@
 'use client'
-import { FORMATS_ARRAY, GeneralOptions, JpegOptions, PngOptions, WebpOptions } from '@/actionsTypes'
-import { Box, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material'
+import {
+  Action, FORMATS, Option, OptionTypes,
+} from '@/actionsTypes'
+import { ActionContext } from '@/features/ActionContext'
+import { createConvertAction, updateOptions } from '@/features/typesManipulations'
+import OptionsSelect from '@/ui/OptionsSelect'
+import OptionsTextField from '@/ui/OptionsTextField'
+import {
+  Box,
+  MenuItem,
+  Radio,
+  TextField, Typography,
+} from '@mui/material'
+import { useContext } from 'react'
 
 type ConvertOptionsProps = {
-  format: (typeof FORMATS_ARRAY)[number]
-  options: (PngOptions[number] | WebpOptions[number] | JpegOptions[number] | GeneralOptions[number])[]
+  format: keyof typeof FORMATS
+  defaultOptions: OptionTypes['options']
 }
 
-export function ConvertOptions({ format, options }: ConvertOptionsProps) {
-  //console.log(options)
-  const selectHandler = (e: SelectChangeEvent) => {
-    const target = Number(e.target.value)
-    const name = e.target.name
+export function ConvertOptions({ format, defaultOptions }: ConvertOptionsProps) {
+
+  const {_setActions} = useContext(ActionContext)
+
+  const onChangeOption = (newOption: Option) => {
+    const newOptionsList = updateOptions(defaultOptions, newOption)
+    const a: Action<'convert'> = createConvertAction(format, [...newOptionsList])
+    console.log(a)
+    _setActions(a)
   }
 
+
+
   function showOptions() {
-    return options.map((option) => {
-      switch (option.id) {
+    return defaultOptions.map((option) => {
+      switch (option.name) {
         case 'compressionLevel':
           return (
-            <FormControl variant='standard' fullWidth>
-              <InputLabel id={option.id}>{option.name}</InputLabel>
-              <Select labelId={option.id} value={option.value} label={option.name}>
+              <OptionsSelect name={option.name} labelId={option.name} value={option.value?.toString()} label={option.description} key={option.name} customOnChange={onChangeOption}>
                 {Array.from({ length: 6 }).map((_, index) => (
-                  <MenuItem value={index + 1}>{index + 1}</MenuItem>
+                    <MenuItem value={index + 1}>{index + 1}</MenuItem>
                 ))}
-              </Select>
-            </FormControl>
+              </OptionsSelect>
           )
+        case 'quality':
+          return <OptionsTextField name={option.name} label={option.description} variant='standard' value={option.value || ''} key={option.name}/>
+        case 'alphaQuality':
+          return <TextField id={option.name} label={option.description} variant='standard' defaultValue={option.value} key={option.name}/>
+        case 'lossless':
+          return <Box key={option.name} sx={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+            <Typography variant='body2'>{option.description}</Typography>
+            <Radio checked={option.value} value={option.name} name="compress-mode" />
+          </Box>
+        case 'nearLossless':
+          return <Box key={option.name}  sx={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+            <Typography variant='body2'>{option.description}</Typography>
+            <Radio checked={option.value} value={option.name} name="compress-mode" />
+          </Box>
       }
     })
   }
-  return <Box sx={{ display: 'flex', gap: 8 }}>{showOptions()}</Box>
+
+  return <Box sx={{ display: 'flex', gap: 8, marginY: 6, alignItems:'center'}}>{showOptions()}</Box>
 }

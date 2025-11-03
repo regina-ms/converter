@@ -1,13 +1,4 @@
-import { PngOptions as SharpPngOptions, WebpOptions as SharpWebpOptions } from 'sharp'
-
-const FORMATS = {
-  png: 'png' as const,
-  webp: 'webp' as const,
-  jpeg: 'jpeg' as const,
-  gif: 'gif' as const,
-} as const
-
-const OPTIONS_NAME = {
+export const OPTIONS_NAME = {
   quality: 'Качество изображения. Число от 1 до 100' as const,
   compressionLevel: 'Уровень сжатия png' as const,
   alphaQuality: 'Качество прозрачности (альфа-канала). Число от 0 до 100' as const,
@@ -15,44 +6,61 @@ const OPTIONS_NAME = {
   nearLossless: 'сжать почти без потерь' as const,
 } as const
 
-export const FORMATS_ARRAY = Object.values(FORMATS)
+export const FORMATS = {
+  png: 'png' as const,
+  webp: 'webp' as const,
+  jpeg: 'jpeg' as const,
+} as const
 
-type Option<K extends keyof typeof OPTIONS_NAME, V> = {
-  id: K
-  name: (typeof OPTIONS_NAME)[K]
-  value: V
+export type Option<N extends keyof typeof OPTIONS_NAME = keyof typeof OPTIONS_NAME> = {
+  name: N
+  description?: typeof OPTIONS_NAME[N],
+  value: any
+  maxValue?:number
+  minValue?:number
 }
 
-export type GeneralOptions = [Option<'quality', number | undefined>]
-export type PngOptions = [Option<'compressionLevel', SharpPngOptions['compressionLevel']>]
-export type WebpOptions = [
-  Option<'alphaQuality', SharpWebpOptions['alphaQuality']>,
-  Option<'lossless', SharpWebpOptions['lossless']>,
-  Option<'nearLossless', SharpWebpOptions['nearLossless']>,
-]
-export type JpegOptions = []
 
 export type Png = {
-  format: (typeof FORMATS)['png']
-  options: PngOptions
+  options: [Option<'quality'>, Option<'compressionLevel'>]
 }
 export type Webp = {
-  format: (typeof FORMATS)['webp']
-  options: WebpOptions
+  options: [Option<'quality'>, Option<'alphaQuality'>, Option<'nearLossless'>, Option<'lossless'>]
 }
 export type Jpeg = {
-  format: (typeof FORMATS)['jpeg']
-  options: JpegOptions
-}
-
-export type ConvertAction = Png | Jpeg | Webp
-
-export type Action = {
-  id: string
-  data: ResizeAction | ConvertAction
+  options: [Option<'quality'>]
 }
 
 export type ResizeAction = {
-  width?: number
-  height?: number
+  width? : number
+  height?:number
 }
+
+export type OptionTypes<F extends keyof typeof FORMATS = keyof typeof FORMATS> = {
+  options:
+      F extends 'png'
+          ? Png['options']
+          : F extends 'webp'
+              ? Webp['options']
+              : F extends 'jpeg'
+                  ? Jpeg['options']
+                  : never
+}
+
+
+export type Action<T extends 'convert' | 'resize', F extends keyof typeof FORMATS = keyof typeof FORMATS> = {
+  id: T
+  data: T extends 'convert' ? {
+    format: F,
+    options: OptionTypes<F>['options']
+  } : ResizeAction
+
+}
+
+
+
+
+
+
+
+

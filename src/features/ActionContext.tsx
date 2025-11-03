@@ -6,8 +6,8 @@ import { PUBLIC_PATHS } from '@/constants'
 import { Action } from '@/actionsTypes'
 
 interface ActionContextObject {
-  actions: Action[]
-  _setActions: (action: Action) => void
+  actions: Action<'convert' | 'resize'>[]
+  _setActions: (action: Action<'convert' | 'resize'>) => void
   input: {
     data: ImageData[]
     set: () => void
@@ -21,7 +21,7 @@ interface ActionContextObject {
 export const ActionContext = createContext({} as ActionContextObject)
 
 export function ActionContextProvider({ children }: PropsWithChildren) {
-  const [actions, setActions] = useState<Action[]>([])
+  const [actions, setActions] = useState<Action<'convert' | 'resize'>[]>([])
   const [inputFiles, setInputFiles] = useState<ImageData[]>([])
   const [outputFiles, setOutputFiles] = useState<ImageData[]>([])
 
@@ -36,9 +36,9 @@ export function ActionContextProvider({ children }: PropsWithChildren) {
     setOutputFiles(data)
   }
 
-  const _setActions = (newAction: Action) => {
+  const _setActions = (newAction: Action<'convert' | 'resize'>) => {
     const existing = actions.find((existingAction) => existingAction.id === newAction.id)
-    let updatedActions: Action[] = []
+    let updatedActions: Action<'convert' | 'resize'>[] = []
 
     if (existing) {
       updatedActions = actions.filter((act) => act.id !== existing.id)
