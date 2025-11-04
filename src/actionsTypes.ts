@@ -3,7 +3,6 @@ export const OPTIONS_NAME = {
   compressionLevel: 'Уровень сжатия png' as const,
   alphaQuality: 'Качество прозрачности (альфа-канала). Число от 0 до 100' as const,
   lossless: 'сжать без потерь' as const,
-  nearLossless: 'сжать почти без потерь' as const,
 } as const
 
 export const FORMATS = {
@@ -13,6 +12,7 @@ export const FORMATS = {
 } as const
 
 export type Option<N extends keyof typeof OPTIONS_NAME = keyof typeof OPTIONS_NAME> = {
+  id: string
   name: N
   description?: typeof OPTIONS_NAME[N],
   value: any
@@ -20,19 +20,18 @@ export type Option<N extends keyof typeof OPTIONS_NAME = keyof typeof OPTIONS_NA
   minValue?:number
 }
 
-
 export type Png = {
   options: [Option<'quality'>, Option<'compressionLevel'>]
 }
 export type Webp = {
-  options: [Option<'quality'>, Option<'alphaQuality'>, Option<'nearLossless'>, Option<'lossless'>]
+  options: [Option<'quality'>, Option<'alphaQuality'>, Option<'lossless'>]
 }
 export type Jpeg = {
   options: [Option<'quality'>]
 }
 
-export type ResizeAction = {
-  width? : number
+export type ResizeOptions = {
+  width?: number
   height?:number
 }
 
@@ -53,7 +52,7 @@ export type Action<T extends 'convert' | 'resize', F extends keyof typeof FORMAT
   data: T extends 'convert' ? {
     format: F,
     options: OptionTypes<F>['options']
-  } : ResizeAction
+  } : ResizeOptions
 
 }
 

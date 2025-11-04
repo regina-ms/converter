@@ -38,7 +38,7 @@ export function ActionContextProvider({ children }: PropsWithChildren) {
 
   const _setActions = (newAction: Action<'convert' | 'resize'>) => {
     const existing = actions.find((existingAction) => existingAction.id === newAction.id)
-    let updatedActions: Action<'convert' | 'resize'>[] = []
+    let updatedActions: Action<'convert' | 'resize'>[] = actions
 
     if (existing) {
       updatedActions = actions.filter((act) => act.id !== existing.id)

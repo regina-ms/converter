@@ -7,9 +7,9 @@ import { ConvertOptions } from '@/components/ConvertOptions'
 
 function Convert() {
 
-
   const defaultPngOptions: Png['options'] = [
     {
+      id: 'CzLCo0M06jbCz0z4yHcu3',
       name: 'quality',
       description: 'Качество изображения. Число от 1 до 100',
       value: 80,
@@ -17,6 +17,7 @@ function Convert() {
       minValue: 0
     },
     {
+      id: 'oUEFF32-dRs6TVSuVDPVG',
       name: 'compressionLevel',
       description: 'Уровень сжатия png',
       value: 6
@@ -25,11 +26,13 @@ function Convert() {
 
   const defaultWebpOptions: Webp['options'] = [
     {
+      id: 'qWjTmuD-0RDco4BI7s-eg',
       name: 'quality',
       description: 'Качество изображения. Число от 1 до 100',
       value: 80,
     },
     {
+      id: 'dyymPpf1Iaf6rXmAdkd0i',
       name: 'alphaQuality',
       description: 'Качество прозрачности (альфа-канала). Число от 0 до 100',
       value: 100,
@@ -37,11 +40,7 @@ function Convert() {
       minValue: 0
     },
     {
-      name: 'nearLossless',
-      description: 'сжать почти без потерь',
-      value: false,
-    },
-    {
+      id: 'HiAgDY1wwlff-5c93nwNv',
       name: 'lossless',
       description: 'сжать без потерь',
       value: false,
@@ -49,11 +48,11 @@ function Convert() {
   ]
 
   const defaultJpegOptions:Jpeg['options'] = [{
+    id: 'OonZfzSRMTB-BHUTB2bE9',
     name: 'quality',
     description: 'Качество изображения. Число от 1 до 100',
     value: 80,
   },]
-
 
   const [selectedFormat, setSelectedFormat] = useState<keyof typeof FORMATS | ''>('')
 
@@ -67,18 +66,27 @@ function Convert() {
   useEffect(() => {
     switch (selectedFormat) {
       case 'png':
-        setDefaultOptions([...defaultPngOptions] )
-        break
+        return setDefaultOptions([...defaultPngOptions] )
+
       case 'webp':
-        setDefaultOptions([...defaultWebpOptions] )
-        break
+        return setDefaultOptions([...defaultWebpOptions] )
+
       case 'jpeg':
-        setDefaultOptions({...defaultJpegOptions })
-            break
+        return setDefaultOptions([...defaultJpegOptions ])
+
       default:
-        setDefaultOptions([])
+        return setDefaultOptions([])
     }
   }, [selectedFormat])
+
+
+  function showConvertOptions() {
+    if(defaultOptions.length && selectedFormat) {
+      return <ConvertOptions format={selectedFormat} defaultOptions={defaultOptions} />
+    }
+
+    return null
+  }
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -99,7 +107,7 @@ function Convert() {
           ))}
         </Select>
       </FormControl>
-      {defaultOptions.length && selectedFormat && <ConvertOptions format={selectedFormat} defaultOptions={defaultOptions} />}
+      {showConvertOptions()}
     </Box>
   )
 }

@@ -1,11 +1,13 @@
 'use client'
 import Convert from '@/components/Convert'
+import Resize from '@/components/Resize'
 import { Stack } from '@mui/material'
 
 function Actions() {
   return (
-    <Stack direction='row' sx={{ marginY: 3 }}>
+    <Stack sx={{ marginY: 3, gap: 2 }}>
       <Convert />
+        <Resize/>
     </Stack>
   )
 }
