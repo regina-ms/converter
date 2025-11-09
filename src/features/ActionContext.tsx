@@ -3,11 +3,12 @@ import { createContext, PropsWithChildren, useEffect, useState } from 'react'
 import { getFiles } from '@/methods/getFiles'
 import { ImageData } from '@/app/api/get-files/route'
 import { PUBLIC_PATHS } from '@/constants'
-import { Action } from '@/actionsTypes'
+import { Action, ACTION_TYPES } from '@/actionsTypes'
 
 interface ActionContextObject {
   actions: Action<'convert' | 'resize'>[]
   _setActions: (action: Action<'convert' | 'resize'>) => void
+  deleteAction: (id: keyof typeof ACTION_TYPES) => void
   input: {
     data: ImageData[]
     set: () => void
@@ -47,6 +48,11 @@ export function ActionContextProvider({ children }: PropsWithChildren) {
     setActions(updatedActions.concat(newAction))
   }
 
+  const deleteAction = (id: keyof typeof ACTION_TYPES) => {
+    const updatedActions = actions.filter((action) => action.id !== id)
+    setActions(updatedActions)
+  }
+
   useEffect(() => {
     _setInputFiles()
   }, [])
@@ -56,6 +62,7 @@ export function ActionContextProvider({ children }: PropsWithChildren) {
       value={{
         actions,
         _setActions,
+        deleteAction,
         input: {
           data: inputFiles,
           set: _setInputFiles,

@@ -1,6 +1,4 @@
 import { Ubuntu_Condensed, Roboto_Condensed, Inter, Roboto } from 'next/font/google'
-import { ActionContextProvider } from '@/features/ActionContext'
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter'
 import { ThemeProvider } from '@mui/material/styles'
 import theme from '../theme'
 import { Container, CssBaseline } from '@mui/material'
@@ -36,11 +34,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang='ru'>
       <body className={`${ubuntuCondensed.variable} ${robotoCondensed.variable} ${inter.variable} ${roboto.variable}`}>
         <CssBaseline />
-        <ActionContextProvider>
           <ThemeProvider theme={theme}>
             <Container sx={{ height: '100svh' }}>{children}</Container>
           </ThemeProvider>
-        </ActionContextProvider>
       </body>
     </html>
   )

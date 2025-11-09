@@ -1,27 +1,30 @@
-import React, { useRef, useState } from 'react'
+'use client'
+import { ActionContext } from '@/features/ActionContext'
+import { writeFiles } from '@/methods/writeFiles'
+import React, { useContext, useRef, useState } from 'react'
 import { Box } from '@mui/material'
 import Button from '@mui/material/Button'
 
-interface Props {
-  onFileInputChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
-  width?: string
-  height?: string
-}
-
-export function HiddenFileInput({ onFileInputChange, width, height }: Props) {
+export function HiddenFileInput() {
   const [activeButton, setActiveButton] = useState(false)
   const ref = useRef<HTMLInputElement>(null)
+    const { input } = useContext(ActionContext)
 
-  const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const onDragOver = () => {
     setActiveButton(true)
   }
-  const onDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+  const onDragLeave = () => {
     setActiveButton(false)
   }
 
-  const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const onDrop = () => {
     setActiveButton(false)
   }
+
+    const onFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files) return
+        writeFiles([...e.target.files]).then(input.set)
+    }
 
   return (
     <Box
@@ -30,8 +33,8 @@ export function HiddenFileInput({ onFileInputChange, width, height }: Props) {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        width,
-        height,
+          height: input.data.length ? 'fit-content' : '100%',
+          marginY: 5
       }}
     >
       <input

@@ -1,101 +1,38 @@
 'use client'
 
-import { Png, Jpeg, Webp, FORMATS, OptionTypes } from '@/actionsTypes'
+import { FORMATS } from '@/actionsTypes'
+import { ActionContext } from '@/features/ActionContext'
+import useConvertOptions from '@/useConvertOptions'
 import { Box, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material'
-import { useEffect, useState } from 'react'
-import { ConvertOptions } from '@/components/ConvertOptions'
+import { useContext, useState } from 'react'
 
 function Convert() {
 
-  const defaultPngOptions: Png['options'] = [
-    {
-      id: 'CzLCo0M06jbCz0z4yHcu3',
-      name: 'quality',
-      description: 'Качество изображения. Число от 1 до 100',
-      value: 80,
-      maxValue:100,
-      minValue: 0
-    },
-    {
-      id: 'oUEFF32-dRs6TVSuVDPVG',
-      name: 'compressionLevel',
-      description: 'Уровень сжатия png',
-      value: 6
-    }
-  ]
+  const {deleteAction} = useContext(ActionContext)
 
-  const defaultWebpOptions: Webp['options'] = [
-    {
-      id: 'qWjTmuD-0RDco4BI7s-eg',
-      name: 'quality',
-      description: 'Качество изображения. Число от 1 до 100',
-      value: 80,
-    },
-    {
-      id: 'dyymPpf1Iaf6rXmAdkd0i',
-      name: 'alphaQuality',
-      description: 'Качество прозрачности (альфа-канала). Число от 0 до 100',
-      value: 100,
-      maxValue:100,
-      minValue: 0
-    },
-    {
-      id: 'HiAgDY1wwlff-5c93nwNv',
-      name: 'lossless',
-      description: 'сжать без потерь',
-      value: false,
-    },
-  ]
+  const [selectedFormat, setSelectedFormat] = useState<keyof typeof FORMATS | undefined>(undefined)
 
-  const defaultJpegOptions:Jpeg['options'] = [{
-    id: 'OonZfzSRMTB-BHUTB2bE9',
-    name: 'quality',
-    description: 'Качество изображения. Число от 1 до 100',
-    value: 80,
-  },]
+  const Options = useConvertOptions(selectedFormat)
 
-  const [selectedFormat, setSelectedFormat] = useState<keyof typeof FORMATS | ''>('')
-
-  const [defaultOptions, setDefaultOptions] = useState<OptionTypes['options'] | []>([])
-
-  const selectHandler = (e: SelectChangeEvent<keyof typeof FORMATS>) => {
+  const selectHandler = (e: SelectChangeEvent<keyof typeof FORMATS | ''>) => {
     const target = e.target.value
+
+    if(target === '') {
+      setSelectedFormat(undefined)
+      deleteAction('convert')
+      return
+    }
     setSelectedFormat(target)
   }
 
-  useEffect(() => {
-    switch (selectedFormat) {
-      case 'png':
-        return setDefaultOptions([...defaultPngOptions] )
-
-      case 'webp':
-        return setDefaultOptions([...defaultWebpOptions] )
-
-      case 'jpeg':
-        return setDefaultOptions([...defaultJpegOptions ])
-
-      default:
-        return setDefaultOptions([])
-    }
-  }, [selectedFormat])
-
-
-  function showConvertOptions() {
-    if(defaultOptions.length && selectedFormat) {
-      return <ConvertOptions format={selectedFormat} defaultOptions={defaultOptions} />
-    }
-
-    return null
-  }
-
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box maxWidth='600px' width='100%'>
       <FormControl fullWidth>
         <InputLabel id='convert-type'>Конвертировать в</InputLabel>
         <Select
           labelId='convert-type'
           label='Конвертировать в'
-          value={selectedFormat}
+          value={selectedFormat || ''}
           onChange={selectHandler}
           fullWidth
         >
@@ -107,7 +44,7 @@ function Convert() {
           ))}
         </Select>
       </FormControl>
-      {showConvertOptions()}
+      {Options}
     </Box>
   )
 }

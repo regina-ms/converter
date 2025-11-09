@@ -1,29 +1,30 @@
 'use client'
-import React, { useState } from 'react'
+import { PATHS, PUBLIC_PATHS } from '@/constants'
+import { ActionContext } from '@/features/ActionContext'
+import { deleteFile } from '@/methods/deleteFile'
+import { getFiles } from '@/methods/getFiles'
+import React, { useContext, useEffect, useState } from 'react'
 import Image from 'next/image'
 import { ImageData } from '@/app/api/get-files/route'
 import { Box, ImageList, ImageListItem } from '@mui/material'
 import theme from '@/theme'
 import Button from '@mui/material/Button'
 
-interface Props {
-  files: ImageData[]
-  deleteFile?: (fileName: string) => void
-}
 
-const _ImageListItem = ({ image, deleteFile }: { image: ImageData; deleteFile?: (fileName: string) => void }) => {
+const CustomListItem = ({ image, deleteFile }: { image: ImageData; deleteFile: (fileName: string) => void }) => {
   const [showDetail, setShowDetail] = useState<boolean>(false)
 
-  const onMouseEnter = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
+
+  const onMouseEnter = () => {
     setShowDetail(true)
   }
 
-  const onMouseLeave = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
+  const onMouseLeave = () => {
     setShowDetail(false)
   }
 
-  const onDeleteButtonCLick = (fileName: string) => {
-    deleteFile && deleteFile(fileName)
+  const onDeleteButtonCLick = () => {
+    deleteFile(image.name)
   }
 
   return (
@@ -63,7 +64,7 @@ const _ImageListItem = ({ image, deleteFile }: { image: ImageData; deleteFile?: 
       >
         <Button
           variant={'outlined'}
-          onClick={() => onDeleteButtonCLick(image.name)}
+          onClick={onDeleteButtonCLick}
           sx={{ color: theme.palette.primary.contrastText }}
         >
           Удалить
@@ -77,13 +78,41 @@ const _ImageListItem = ({ image, deleteFile }: { image: ImageData; deleteFile?: 
   )
 }
 
-function FileList({ files, deleteFile }: Props) {
+function FileList() {
+  const [imageData, setImageData] = useState<ImageData[]>([])
+  const { input } = useContext(ActionContext)
+
+  const getImageData = async () => {
+    const { data } = await getFiles(PUBLIC_PATHS.input)
+    if (!data.length) {
+      setImageData([])
+      return
+    }
+    setImageData(() => {
+      return data.map((object) => {
+        return {
+          ...object,
+          name: `/${PATHS.input}/${object.name}`,
+        }
+      })
+    })
+  }
+
+  const removeFile = (fileName: string) => {
+    deleteFile(fileName).then(input.set)
+  }
+
+  useEffect(() => {
+    getImageData()
+  }, [input])
+
+
   function showImages() {
-    return files.map((image, index) => <_ImageListItem image={image} key={index} deleteFile={deleteFile} />)
+    return imageData.map((image, index) => <CustomListItem image={image} key={index} deleteFile={removeFile} />)
   }
 
   return (
-    <ImageList cols={files.length < 5 ? files.length : 5} sx={{ maxHeight: '610px', overflowY: 'auto' }}>
+    <ImageList cols={imageData.length < 5 ? imageData.length : 5} sx={{ maxHeight: '610px', overflowY: 'auto' }}>
       {showImages()}
     </ImageList>
   )
