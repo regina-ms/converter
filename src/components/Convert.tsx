@@ -36,11 +36,11 @@ function Convert() {
           onChange={selectHandler}
           fullWidth
         >
-          <MenuItem value={''}>
+          <MenuItem value=''>
             <em>не конвертировать</em>
           </MenuItem>
           {Object.values(FORMATS).map((value) => (
-            <MenuItem value={value}>{value}</MenuItem>
+            <MenuItem key={value} value={value}>{value}</MenuItem>
           ))}
         </Select>
       </FormControl>

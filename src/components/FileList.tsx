@@ -38,7 +38,7 @@ const CustomListItem = ({ image, deleteFile }: { image: ImageData; deleteFile: (
         alt={image.name}
         width={image.width}
         height={300}
-        loading={'lazy'}
+        loading='lazy'
         style={{ objectFit: 'cover', width: '100%' }}
       />
       <Box
@@ -63,7 +63,7 @@ const CustomListItem = ({ image, deleteFile }: { image: ImageData; deleteFile: (
         }}
       >
         <Button
-          variant={'outlined'}
+          variant='outlined'
           onClick={onDeleteButtonCLick}
           sx={{ color: theme.palette.primary.contrastText }}
         >

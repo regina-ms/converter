@@ -2,6 +2,7 @@
 import Convert from '@/components/Convert'
 import Resize from '@/components/Resize'
 import { ActionContext } from '@/features/ActionContext'
+import { archiveFiles } from '@/methods/archiveFiles'
 import { transformFiles } from '@/methods/transformFiles'
 import { Stack } from '@mui/material'
 import Button from '@mui/material/Button'
@@ -10,9 +11,10 @@ import { useContext } from 'react'
 function Actions() {
     const {actions, input} = useContext(ActionContext)
 
-    const goActions = () => {
+    const goActions = async () => {
         const fileNames = input.data.map((image) => image.name)
-        transformFiles({fileNames, actions})
+        const transformPromise = await transformFiles({fileNames, actions})
+        const archivePromise = await archiveFiles()
     }
 
 

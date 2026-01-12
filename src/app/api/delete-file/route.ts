@@ -14,8 +14,6 @@ export async function POST(request: NextRequest) {
     await unlink(_path)
   } catch (error: any) {
     response.status = `error: ${error.message}`
-  } finally {
-    console.log(response.status)
   }
 
   return Response.json(response)

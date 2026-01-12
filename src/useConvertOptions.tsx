@@ -30,7 +30,7 @@ function useConvertOptions(format?: keyof typeof FORMATS) {
                     return (
                         <OptionsSelect name={option.name} labelId={option.name} value={option.value?.toString()} label={option.description} id={option.id} key={option.id} customOnChange={onChangeOption}>
                             {Array.from({ length: 6 }).map((_, index) => (
-                                <MenuItem value={index + 1}>{index + 1}</MenuItem>
+                                <MenuItem key={index} value={index + 1}>{index + 1}</MenuItem>
                             ))}
                         </OptionsSelect>
                     )

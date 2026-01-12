@@ -46,8 +46,8 @@ function SizeField({name, label}: SizeFieldProps) {
 function Resize() {
     return (
         <Stack direction='row' gap={4}>
-          <SizeField variant={'filled'} name='width' label='Ширина в px'/>
-          <SizeField variant={'filled'} name='height' label='Длина в px'/>
+          <SizeField variant='filled' name='width' label='Ширина в px'/>
+          <SizeField variant='filled' name='height' label='Длина в px'/>
         </Stack>
     )
 }

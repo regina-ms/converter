@@ -3,7 +3,7 @@ import { createContext, PropsWithChildren, useEffect, useState } from 'react'
 import { getFiles } from '@/methods/getFiles'
 import { ImageData } from '@/app/api/get-files/route'
 import { PUBLIC_PATHS } from '@/constants'
-import { Action, ACTION_TYPES } from '@/actionsTypes'
+import { Action, ACTION_TYPES, OPTIONS_NAME } from '@/actionsTypes'
 
 interface ActionContextObject {
   actions: Action<'convert' | 'resize'>[]
@@ -52,6 +52,8 @@ export function ActionContextProvider({ children }: PropsWithChildren) {
     const updatedActions = actions.filter((action) => action.id !== id)
     setActions(updatedActions)
   }
+
+
 
   useEffect(() => {
     _setInputFiles()

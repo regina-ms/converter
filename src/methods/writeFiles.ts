@@ -11,8 +11,5 @@ export async function writeFiles(files: File[], path: string = PUBLIC_PATHS.inpu
     body: data,
   })
 
-  const a = res
-
-  console.log(a)
-  return a
+  return res
 }

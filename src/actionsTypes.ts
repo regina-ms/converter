@@ -14,6 +14,7 @@ export const FORMATS = {
   png: 'png' as const,
   webp: 'webp' as const,
   jpeg: 'jpeg' as const,
+  avif: 'avif' as const,
 } as const
 
 export type Option<N extends keyof typeof OPTIONS_NAME = keyof typeof OPTIONS_NAME> = {
@@ -35,6 +36,10 @@ export type Jpeg = {
   options: [Option<'quality'>]
 }
 
+export type Avif = {
+  options: [Option<'quality'>]
+}
+
 export type ResizeOptions = {
   width?: number
   height?:number
@@ -48,6 +53,8 @@ export type OptionTypes<F extends keyof typeof FORMATS = keyof typeof FORMATS> =
               ? Webp['options']
               : F extends 'jpeg'
                   ? Jpeg['options']
+              : F extends 'avif'
+                      ? Avif['options']
                   : never
 }
 

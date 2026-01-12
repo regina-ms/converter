@@ -10,7 +10,6 @@ function Carousel({ options, children }: CarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel(options)
 
   useEffect(() => {
-    console.log(emblaApi)
   }, [emblaApi])
   return (
     <div className='embla' ref={emblaRef}>

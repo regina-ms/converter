@@ -1,4 +1,4 @@
-import { Jpeg, Png, Webp } from '@/actionsTypes'
+import { Avif, Jpeg, Png, Webp } from '@/actionsTypes'
 
 const PNG: Png['options'] = [
     {
@@ -47,10 +47,18 @@ const JPEG:Jpeg['options'] = [{
     value: 80,
 },]
 
+const AVIF:Avif['options'] = [{
+    id: 'OonZfzSRMTB-BHUTB2bE9',
+    name: 'quality',
+    description: 'Качество изображения. Число от 1 до 100',
+    value: 80,
+},]
+
 const DEFAULT = {
     png: PNG,
     webp: WEBP,
-    jpeg: JPEG
+    jpeg: JPEG,
+    avif: AVIF
 }
 
 export default DEFAULT
