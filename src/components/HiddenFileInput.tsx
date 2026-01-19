@@ -1,5 +1,6 @@
 'use client'
 import { ActionContext } from '@/features/ActionContext'
+import { saveFiles } from '@/methods/saveFiles'
 import { writeFiles } from '@/methods/writeFiles'
 import React, { useContext, useRef, useState } from 'react'
 import { Box } from '@mui/material'
@@ -23,7 +24,10 @@ export function HiddenFileInput() {
 
     const onFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files) return
-        writeFiles([...e.target.files]).then(input.set)
+        //writeFiles([...e.target.files]).then(input.set)
+      saveFiles([...e.target.files])
+
+
     }
 
   return (
