@@ -53,12 +53,6 @@ export function ActionContextProvider({ children }: PropsWithChildren) {
     setActions(updatedActions)
   }
 
-
-
-  useEffect(() => {
-    _setInputFiles()
-  }, [])
-
   return (
     <ActionContext.Provider
       value={{

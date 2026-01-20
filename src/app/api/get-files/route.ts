@@ -5,6 +5,8 @@ import { convertImageSize } from '@/features/convertImageSize'
 import { NextRequest } from 'next/server'
 
 export type ImageData = {
+  dataUrl: string
+  originalBuffer: Buffer
   name: string
   size: string
   width: number

@@ -1,6 +1,6 @@
 'use client'
 import { ActionContext } from '@/features/ActionContext'
-import { saveFiles } from '@/methods/saveFiles'
+import { getFileData } from '@/methods/getFileData'
 import { writeFiles } from '@/methods/writeFiles'
 import React, { useContext, useRef, useState } from 'react'
 import { Box } from '@mui/material'
@@ -9,7 +9,7 @@ import Button from '@mui/material/Button'
 export function HiddenFileInput() {
   const [activeButton, setActiveButton] = useState(false)
   const ref = useRef<HTMLInputElement>(null)
-    const { input } = useContext(ActionContext)
+  const { input } = useContext(ActionContext)
 
   const onDragOver = () => {
     setActiveButton(true)
@@ -22,13 +22,11 @@ export function HiddenFileInput() {
     setActiveButton(false)
   }
 
-    const onFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files) return
-        //writeFiles([...e.target.files]).then(input.set)
-      saveFiles([...e.target.files])
-
-
-    }
+  const onFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return
+    //writeFiles([...e.target.files]).then(input.set)
+    getFileData([...e.target.files]).then(input.set)
+  }
 
   return (
     <Box
@@ -37,8 +35,8 @@ export function HiddenFileInput() {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-          height: input.data.length ? 'fit-content' : '100%',
-          marginY: 5
+        height: input.data.length ? 'fit-content' : '100%',
+        marginY: 5,
       }}
     >
       <input

@@ -10,10 +10,8 @@ import { Box, ImageList, ImageListItem } from '@mui/material'
 import theme from '@/theme'
 import Button from '@mui/material/Button'
 
-
 const CustomListItem = ({ image, deleteFile }: { image: ImageData; deleteFile: (fileName: string) => void }) => {
   const [showDetail, setShowDetail] = useState<boolean>(false)
-
 
   const onMouseEnter = () => {
     setShowDetail(true)
@@ -34,7 +32,7 @@ const CustomListItem = ({ image, deleteFile }: { image: ImageData; deleteFile: (
       onMouseLeave={onMouseLeave}
     >
       <Image
-        src={image.name}
+        src={image.dataUrl}
         alt={image.name}
         width={image.width}
         height={300}
@@ -62,11 +60,7 @@ const CustomListItem = ({ image, deleteFile }: { image: ImageData; deleteFile: (
           },
         }}
       >
-        <Button
-          variant='outlined'
-          onClick={onDeleteButtonCLick}
-          sx={{ color: theme.palette.primary.contrastText }}
-        >
+        <Button variant='outlined' onClick={onDeleteButtonCLick} sx={{ color: theme.palette.primary.contrastText }}>
           Удалить
         </Button>
         <div>{`Формат: ${image.format}`}</div>
@@ -101,11 +95,6 @@ function FileList() {
   const removeFile = (fileName: string) => {
     deleteFile(fileName).then(input.set)
   }
-
-  useEffect(() => {
-    getImageData()
-  }, [input])
-
 
   function showImages() {
     return imageData.map((image, index) => <CustomListItem image={image} key={index} deleteFile={removeFile} />)
