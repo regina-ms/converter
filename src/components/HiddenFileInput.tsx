@@ -1,15 +1,15 @@
 'use client'
 import { ActionContext } from '@/features/ActionContext'
 import { getFileData } from '@/methods/getFileData'
-import { writeFiles } from '@/methods/writeFiles'
 import React, { useContext, useRef, useState } from 'react'
-import { Box } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import Button from '@mui/material/Button'
 
 export function HiddenFileInput() {
+    const [error, setError] = useState<string>()
   const [activeButton, setActiveButton] = useState(false)
   const ref = useRef<HTMLInputElement>(null)
-  const { input } = useContext(ActionContext)
+    const {setInputFiles, inputFiles} = useContext(ActionContext)
 
   const onDragOver = () => {
     setActiveButton(true)
@@ -24,8 +24,12 @@ export function HiddenFileInput() {
 
   const onFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return
-    //writeFiles([...e.target.files]).then(input.set)
-    getFileData([...e.target.files]).then(input.set)
+      const result = await getFileData([...e.target.files])
+      if('error' in result) {
+          setError(result.error)
+      } else {
+          setInputFiles(inputFiles.concat(result))
+      }
   }
 
   return (
@@ -33,9 +37,10 @@ export function HiddenFileInput() {
       sx={{
         position: 'relative',
         display: 'flex',
+          flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        height: input.data.length ? 'fit-content' : '100%',
+        height: inputFiles.length ? 'fit-content' : '100%',
         marginY: 5,
       }}
     >
@@ -57,6 +62,7 @@ export function HiddenFileInput() {
       >
         Загрузить изображение
       </Button>
+        {error && <Typography marginTop={1} color='error'>{error}</Typography>}
     </Box>
   )
 }

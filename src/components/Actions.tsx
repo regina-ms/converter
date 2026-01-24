@@ -2,30 +2,39 @@
 import Convert from '@/components/Convert'
 import Resize from '@/components/Resize'
 import { ActionContext } from '@/features/ActionContext'
-import { archiveFiles } from '@/methods/archiveFiles'
+import { getUrlToDownload } from '@/methods/getUrlToDownload'
 import { transformFiles } from '@/methods/transformFiles'
-import { Stack } from '@mui/material'
+import { Stack, Typography } from '@mui/material'
 import Button from '@mui/material/Button'
-import { useContext } from 'react'
+import DownloadIcon from '@mui/icons-material/Download';
+
+import { useContext, useState } from 'react'
 
 function Actions() {
-    const {actions, input} = useContext(ActionContext)
+    const {actions, inputFiles} = useContext(ActionContext)
+    const [error, setError] = useState<string>()
+    const [url, setUrl] = useState<string>()
 
     const goActions = async () => {
-        const fileNames = input.data.map((image) => image.name)
-        const transformPromise = await transformFiles({fileNames, actions})
-        const archivePromise = await archiveFiles()
+        const transformedFiles = await transformFiles({files: inputFiles, actions})
+        if('error' in transformedFiles) return setError('Ошибка конвертации')
+        setUrl(await getUrlToDownload(transformedFiles))
     }
 
+    const removeLink = () => setUrl(undefined)
 
-    if(!input.data.length) return null
+
+    if(!inputFiles.length) return null
   return (
     <>
-        <Stack marginTop={6} marginBottom={4} direction='row' justifyContent='space-between' alignItems='center'>
+        <Stack marginTop={6} marginBottom={4} direction='row' justifyContent='space-between' alignItems='start'>
             <Convert />
             <Resize/>
         </Stack>
         <Button variant='outlined' size='large' sx={{width: 'fit-content' }} onClick={goActions}>Поехали!</Button>
+        {error && <Typography color='error'>{error}</Typography>}
+        {url && <Button onClick={() => removeLink()} endIcon={<DownloadIcon/>} download='converted-images.zip' href={url} sx={{marginLeft:2}}>Скачать архив</Button>}
+
     </>
   )
 }

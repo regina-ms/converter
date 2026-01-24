@@ -1,3 +1,5 @@
+import sharp from 'sharp'
+
 export const ACTION_TYPES = {
   convert: 'convert' as const,
   resize: 'resize' as const,
@@ -66,7 +68,6 @@ export type Action<T extends keyof typeof ACTION_TYPES, F extends keyof typeof F
     options: OptionTypes<F>['options']
   } : ResizeOptions
 }
-
 
 
 

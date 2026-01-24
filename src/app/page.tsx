@@ -1,7 +1,7 @@
 import React from 'react'
 import Actions from '@/components/Actions'
 import { ActionContextProvider } from '@/features/ActionContext'
-import FileList from '@/components/FileList'
+import FileList from '@/components/FileList/FileList'
 import { HiddenFileInput } from '@/components/HiddenFileInput'
 
 export default function Page() {

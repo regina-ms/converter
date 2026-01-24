@@ -1,22 +1,15 @@
 'use client'
 import { createContext, PropsWithChildren, useEffect, useState } from 'react'
-import { getFiles } from '@/methods/getFiles'
-import { ImageData } from '@/app/api/get-files/route'
-import { PUBLIC_PATHS } from '@/constants'
-import { Action, ACTION_TYPES, OPTIONS_NAME } from '@/actionsTypes'
+import { Action, ACTION_TYPES } from '@/actionsTypes'
+import {ImageData} from '@/app/api/get-file-data/route'
 
 interface ActionContextObject {
   actions: Action<'convert' | 'resize'>[]
   _setActions: (action: Action<'convert' | 'resize'>) => void
   deleteAction: (id: keyof typeof ACTION_TYPES) => void
-  input: {
-    data: ImageData[]
-    set: () => void
-  }
-  output: {
-    data: ImageData[]
-    set: () => void
-  }
+  inputFiles: ImageData[],
+  setInputFiles: (files:ImageData[]) => void
+  removeInputFile: (dataUrl: string) => void
 }
 
 export const ActionContext = createContext({} as ActionContextObject)
@@ -24,17 +17,16 @@ export const ActionContext = createContext({} as ActionContextObject)
 export function ActionContextProvider({ children }: PropsWithChildren) {
   const [actions, setActions] = useState<Action<'convert' | 'resize'>[]>([])
   const [inputFiles, setInputFiles] = useState<ImageData[]>([])
-  const [outputFiles, setOutputFiles] = useState<ImageData[]>([])
 
-  const _setInputFiles = async () => {
-    const { data } = await getFiles(PUBLIC_PATHS.input)
-    setInputFiles(data)
+  const _setInputFiles = (files:ImageData[]) => {
+    const map = new Map<string, ImageData>()
+    files.concat(inputFiles).forEach((file) => map.set(file.dataUrl, file))
+    setInputFiles(Array.from(map.values()))
   }
 
-  const _setOutPutFiles = async () => {
-    const { data } = await getFiles(PUBLIC_PATHS.output)
-    if (!data.length) return
-    setOutputFiles(data)
+  const removeInputFile = (dataUrl: string) => {
+    const updatedFiles = inputFiles.filter((file) => file.dataUrl !== dataUrl)
+    setInputFiles(updatedFiles)
   }
 
   const _setActions = (newAction: Action<'convert' | 'resize'>) => {
@@ -59,14 +51,9 @@ export function ActionContextProvider({ children }: PropsWithChildren) {
         actions,
         _setActions,
         deleteAction,
-        input: {
-          data: inputFiles,
-          set: _setInputFiles,
-        },
-        output: {
-          data: outputFiles,
-          set: _setOutPutFiles,
-        },
+        inputFiles,
+        setInputFiles: _setInputFiles,
+        removeInputFile,
       }}
     >
       {children}

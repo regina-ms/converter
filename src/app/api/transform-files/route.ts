@@ -1,45 +1,47 @@
 import { Action } from '@/actionsTypes'
 import { Body } from '@/app/api/transform-files/types'
 import { getFormattedOptions } from '@/features/getFormattedOptions'
+import { TransformedFile } from '@/methods/transformFiles'
 import { NextRequest } from 'next/server'
 import sharp from 'sharp'
-import { PUBLIC_PATHS } from '@/constants'
-import fs, { existsSync } from 'node:fs'
-import fsAsync from 'node:fs/promises'
-
 
 export async function POST(request: NextRequest) {
-  if (!request.body) return Response.json({ data: 'no' })
 
-  const reqBody:Body = await request.json()
-  const { fileNames, actions } = reqBody
+  try {
+    const reqBody:Body = await request.json()
+    const { files , actions } = reqBody
 
+    const transformedData:TransformedFile[] = await Promise.all(files.map( async (file) => {
+      const convert = actions.find((action) => action.id === 'convert') as Action<'convert'>
+      const resize = actions.find((action) => action.id === 'resize') as Action<'resize'>
+      const buffer = Buffer.from(file.originalBuffer.data)
+      let stream = sharp(buffer).keepMetadata()
 
-  if (!existsSync(PUBLIC_PATHS.output)) {
-    fs.mkdirSync(PUBLIC_PATHS.output)
+      if(resize) {
+        stream = stream.resize(resize.data)
+      }
+
+      if(convert) {
+        const options = getFormattedOptions(convert.data.options)
+        stream = stream.toFormat(convert.data.format, options)
+      }
+
+      const processedBuffer = await stream.toBuffer()
+      const format = convert.data.format || file.format
+
+      return {
+        name: `${file.name}.${format}`,
+        format: file.format,
+        originalBuffer: {
+          type: 'Buffer',
+          data: Array.from(processedBuffer)
+        }
+      }
+    }))
+
+    return Response.json({data: transformedData})
+
+  } catch (e:any) {
+    throw new Error()
   }
-
-  for (const name of fileNames) {
-    const file = await fsAsync.readFile(`${PUBLIC_PATHS.input}/${name}`)
-    let stream = sharp(file).keepMetadata()
-    const fileNameParts = Array.from<Array<string>>(name.matchAll(/(.+)(\..+$)/g))[0]
-    const fileName = fileNameParts[1]
-    let format = fileNameParts[2]
-
-    const resize = actions.find((action) => action.id === 'resize') as Action<'resize'>
-    if(resize) {
-      stream.resize(resize.data)
-    }
-
-    const convert = actions.find((action) => action.id === 'convert') as Action<'convert'>
-    if(convert) {
-      const options = getFormattedOptions(convert.data.options)
-      stream.toFormat(convert.data.format, options)
-      format = `.${convert.data.format}`
-    }
-
-    await stream.toFile(`${PUBLIC_PATHS.output}/${fileName}${format}`)
-  }
-
-  return Response.json({ data: 'ok' })
 }

@@ -27,7 +27,7 @@ function Convert() {
 
   return (
     <Box maxWidth='600px' width='100%'>
-      <FormControl fullWidth>
+      <FormControl fullWidth sx={{marginBottom:2}}>
         <InputLabel id='convert-type'>Конвертировать в</InputLabel>
         <Select
           labelId='convert-type'

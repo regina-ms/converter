@@ -23,7 +23,7 @@ function OptionsSelect({name, value,label, children, customOnChange, id}: Custom
         setLocalValue(e.target.value)
         customOnChange && customOnChange({id, name, value:e.target.value})
     }
-    return (<FormControl variant='standard' fullWidth key={name}>
+    return (<FormControl variant='standard' key={name} fullWidth>
         <InputLabel id={name}>{label}</InputLabel>
         <Select labelId={name} value={localValue} label={label} onChange={localOnChange}>
             {children}

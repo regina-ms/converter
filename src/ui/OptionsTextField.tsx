@@ -39,7 +39,7 @@ function OptionsTextField({id, name, label, value, customOnChange, minValue, max
         }
     }, [localValue])
 
-    return (<TextField name={name} label={label} variant='standard' value={localValue} onChange={localOnchange} helperText={errorData.errorText} error={errorData.error}/>)
+    return (<TextField fullWidth name={name} label={label} variant='standard' value={localValue} onChange={localOnchange} helperText={errorData.errorText} error={errorData.error}/>)
 }
 
 export default OptionsTextField

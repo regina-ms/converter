@@ -4,7 +4,7 @@ import { ActionContext } from '@/features/ActionContext'
 import { createConvertAction, updateOptions } from '@/features/typesManipulations'
 import OptionsSelect from '@/ui/OptionsSelect'
 import OptionsTextField from '@/ui/OptionsTextField'
-import { Checkbox, FormControlLabel, MenuItem } from '@mui/material'
+import { Checkbox, FormControlLabel, MenuItem, Stack } from '@mui/material'
 import { useContext } from 'react'
 
 
@@ -28,7 +28,7 @@ function useConvertOptions(format?: keyof typeof FORMATS) {
             switch (option.name) {
                 case 'compressionLevel':
                     return (
-                        <OptionsSelect name={option.name} labelId={option.name} value={option.value?.toString()} label={option.description} id={option.id} key={option.id} customOnChange={onChangeOption}>
+                        <OptionsSelect name={option.name} labelId={option.name} value={option.value?.toString()} label={option.description} id={option.id} key={option.id} customOnChange={onChangeOption} fullWidth>
                             {Array.from({ length: 6 }).map((_, index) => (
                                 <MenuItem key={index} value={index + 1}>{index + 1}</MenuItem>
                             ))}
@@ -40,7 +40,7 @@ function useConvertOptions(format?: keyof typeof FORMATS) {
                     return <OptionsTextField name={option.name} label={option.description} variant='standard' value={option.value || ''} id={option.id} key={option.id} customOnChange={onChangeOption} maxValue={option.maxValue} minValue={option.minValue}/>
 
                 case 'lossless':
-                    return <FormControlLabel key={option.id} control={<Checkbox onChange={(e) => {
+                    return <FormControlLabel sx={{textWrap:'nowrap'}} key={option.id} control={<Checkbox onChange={(e) => {
                         const checked = e.target.checked
                         onChangeOption({id: option.id, name: option.name, value: checked})
                     }}/>} label={option.description} />
@@ -48,7 +48,7 @@ function useConvertOptions(format?: keyof typeof FORMATS) {
         })
     }
 
-    return <>{showOptions()}</>
+    return <Stack direction='row' gap={2} justifyContent='space-between'>{showOptions()}</Stack>
 }
 
 

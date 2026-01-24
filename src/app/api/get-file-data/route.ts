@@ -1,12 +1,25 @@
 import { NextRequest } from 'next/server'
 import sharp from 'sharp'
 import { convertImageSize } from '@/features/convertImageSize'
-import { ImageData } from '@/app/api/get-files/route'
+
+export type LikeBufferObject = {type: "Buffer", data:number[]}
+
+type BufferKey = Buffer | LikeBufferObject
+
+export type ImageData<T extends BufferKey = Buffer> = {
+  dataUrl: string
+  originalBuffer: T
+  name: string
+  size: string
+  width: number
+  height: number
+  format: keyof sharp.FormatEnum | undefined
+}
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
-    let newImageData = []
+    let newImageData:ImageData[] = []
 
     for (const file of formData.values()) {
       const _file = file as File
@@ -22,8 +35,8 @@ export async function POST(request: NextRequest) {
       newImageData.push({ dataUrl, originalBuffer, name: _file.name, size, width, height, format })
     }
 
-    return Response.json({ status: 'success', newImageData })
+    return Response.json({ data: newImageData })
   } catch (e) {
-    return Response.json({ status: 'error', newImageData: [] })
+    throw Error()
   }
 }
