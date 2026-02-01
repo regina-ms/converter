@@ -1,5 +1,5 @@
 'use client'
-import { createContext, PropsWithChildren, useEffect, useState } from 'react'
+import { createContext, PropsWithChildren, useState } from 'react'
 import { Action, ACTION_TYPES } from '@/actionsTypes'
 import {ImageData} from '@/app/api/get-file-data/route'
 

@@ -6,10 +6,11 @@ import { Box, Typography } from '@mui/material'
 import Button from '@mui/material/Button'
 
 export function HiddenFileInput() {
-    const [error, setError] = useState<string>()
+  const [error, setError] = useState<string>()
   const [activeButton, setActiveButton] = useState(false)
+  const [loading, setLoading] = useState<boolean>(false)
   const ref = useRef<HTMLInputElement>(null)
-    const {setInputFiles, inputFiles} = useContext(ActionContext)
+  const { setInputFiles, inputFiles } = useContext(ActionContext)
 
   const onDragOver = () => {
     setActiveButton(true)
@@ -24,12 +25,14 @@ export function HiddenFileInput() {
 
   const onFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return
-      const result = await getFileData([...e.target.files])
-      if('error' in result) {
-          setError(result.error)
-      } else {
-          setInputFiles(inputFiles.concat(result))
-      }
+    setLoading(true)
+    const result = await getFileData([...e.target.files])
+    if ('error' in result) {
+      setError(result.error)
+    } else {
+      setInputFiles(inputFiles.concat(result))
+    }
+    setLoading(false)
   }
 
   return (
@@ -37,7 +40,7 @@ export function HiddenFileInput() {
       sx={{
         position: 'relative',
         display: 'flex',
-          flexDirection: 'column',
+        flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
         height: inputFiles.length ? 'fit-content' : '100%',
@@ -59,10 +62,15 @@ export function HiddenFileInput() {
         size='large'
         sx={{ boxShadow: activeButton ? 10 : 0, backgroundColor: activeButton ? 'success.main' : 'primary.main' }}
         onClick={() => ref.current && ref.current.click()}
+        loading={loading}
       >
         Загрузить изображение
       </Button>
-        {error && <Typography marginTop={1} color='error'>{error}</Typography>}
+      {error && (
+        <Typography marginTop={1} color='error'>
+          {error}
+        </Typography>
+      )}
     </Box>
   )
 }

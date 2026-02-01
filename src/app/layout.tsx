@@ -1,3 +1,4 @@
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter'
 import { Ubuntu_Condensed, Roboto_Condensed, Inter, Roboto } from 'next/font/google'
 import { ThemeProvider } from '@mui/material/styles'
 import theme from '../theme'
@@ -33,10 +34,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang='ru'>
       <body className={`${ubuntuCondensed.variable} ${robotoCondensed.variable} ${inter.variable} ${roboto.variable}`}>
-        <CssBaseline />
+        <AppRouterCacheProvider>
+          <CssBaseline />
           <ThemeProvider theme={theme}>
             <Container sx={{ height: '100svh' }}>{children}</Container>
           </ThemeProvider>
+        </AppRouterCacheProvider>
       </body>
     </html>
   )
