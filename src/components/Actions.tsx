@@ -19,7 +19,7 @@ function Actions() {
   const goActions = async () => {
     setLoading(true)
     const transformedFiles = await transformFiles({ files: inputFiles, actions })
-    if ('error' in transformedFiles) return setError('Ошибка конвертации')
+    if ('error' in transformedFiles) return setError(transformedFiles.error)
     setUrl(await getUrlToDownload(transformedFiles))
     setLoading(false)
   }
