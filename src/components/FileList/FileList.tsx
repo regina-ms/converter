@@ -1,27 +1,18 @@
 'use client'
 import { ActionContext } from '@/features/ActionContext'
+import { SavedImage } from '@/methods/uploadImages'
 import React, { useContext } from 'react'
 import Image from 'next/image'
 import { Box, ImageList, ImageListItem } from '@mui/material'
 import theme from '@/theme'
-import Button from '@mui/material/Button'
 import styles from './FileList.module.css'
-import {ImageData} from '@/app/api/get-file-data/route'
 
-const CustomListItem = ({ file, removeFile }: { file: ImageData; removeFile: (dataUrl: string) => void }) => {
-
+const CustomListItem = ({ file, removeFile }: { file: SavedImage; removeFile: (dataUrl: string) => void }) => {
   return (
     <ImageListItem className={styles.imageItem}>
-      <Image
-        src={file.dataUrl}
-        alt={file.name}
-        width={file.width}
-        height={file.height}
-        loading='lazy'
-        className={styles.image}
-      />
+      <Image src={file.url} alt={file.name} width={100} height={100} loading='lazy' className={styles.image} />
       <Box
-          className={styles.imageInfo}
+        className={styles.imageInfo}
         sx={{
           padding: theme.spacing(2),
           color: theme.palette.primary.contrastText,
@@ -30,13 +21,7 @@ const CustomListItem = ({ file, removeFile }: { file: ImageData; removeFile: (da
           },
         }}
       >
-        <Button variant='outlined' sx={{ color: theme.palette.primary.contrastText }} onClick={() => removeFile(file.dataUrl)}>
-          Удалить
-        </Button>
-        <div>{`Формат: ${file.format}`}</div>
         <div>{`Размер: ${file.size}`}</div>
-        <div>{`Ширина: ${file.width}`}</div>
-        <div>{`Высота: ${file.height}`}</div>
       </Box>
     </ImageListItem>
   )

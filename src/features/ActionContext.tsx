@@ -1,14 +1,14 @@
 'use client'
 import { createContext, PropsWithChildren, useState } from 'react'
 import { Action, ACTION_TYPES } from '@/actionsTypes'
-import {ImageData} from '@/app/api/get-file-data/route'
+import { ImageData } from '@/app/api/get-file-data/route'
 
 interface ActionContextObject {
   actions: Action<'convert' | 'resize'>[]
   _setActions: (action: Action<'convert' | 'resize'>) => void
   deleteAction: (id: keyof typeof ACTION_TYPES) => void
-  inputFiles: ImageData[],
-  setInputFiles: (files:ImageData[]) => void
+  inputFiles: any[]
+  setInputFiles: (files: ImageData[]) => void
   removeInputFile: (dataUrl: string) => void
 }
 
@@ -16,9 +16,9 @@ export const ActionContext = createContext({} as ActionContextObject)
 
 export function ActionContextProvider({ children }: PropsWithChildren) {
   const [actions, setActions] = useState<Action<'convert' | 'resize'>[]>([])
-  const [inputFiles, setInputFiles] = useState<ImageData[]>([])
+  const [inputFiles, setInputFiles] = useState<any[]>([])
 
-  const _setInputFiles = (files:ImageData[]) => {
+  const _setInputFiles = (files: ImageData[]) => {
     const map = new Map<string, ImageData>()
     files.concat(inputFiles).forEach((file) => map.set(file.dataUrl, file))
     setInputFiles(Array.from(map.values()))

@@ -1,6 +1,6 @@
 'use client'
 import { ActionContext } from '@/features/ActionContext'
-import { getFileData } from '@/methods/getFileData'
+import { uploadImages } from '@/methods/uploadImages'
 import React, { useContext, useRef, useState } from 'react'
 import { Box, Typography } from '@mui/material'
 import Button from '@mui/material/Button'
@@ -25,12 +25,15 @@ export function HiddenFileInput() {
 
   const onFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return
+
     setLoading(true)
-    const result = await getFileData([...e.target.files])
+    //const result = await getFileData([...e.target.files])
+    const result = await uploadImages([...e.target.files])
+
     if ('error' in result) {
       setError(result.error)
     } else {
-      setInputFiles(inputFiles.concat(result))
+      setInputFiles(inputFiles.concat(result.saved))
     }
     setLoading(false)
   }
