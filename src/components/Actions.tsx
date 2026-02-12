@@ -11,14 +11,14 @@ import DownloadIcon from '@mui/icons-material/Download'
 import { useContext, useState } from 'react'
 
 function Actions() {
-  const { actions, inputFiles } = useContext(ActionContext)
+  const { actions, rawImages } = useContext(ActionContext)
   const [error, setError] = useState<string>()
   const [loading, setLoading] = useState<boolean>(false)
   const [url, setUrl] = useState<string>()
 
   const goActions = async () => {
     setLoading(true)
-    const transformedFiles = await transformFiles({ files: inputFiles, actions })
+    const transformedFiles = await transformFiles({ files: rawImages, actions })
     if ('error' in transformedFiles) return setError(transformedFiles.error)
     setUrl(await getUrlToDownload(transformedFiles))
     setLoading(false)
@@ -26,7 +26,7 @@ function Actions() {
 
   const removeLink = () => setUrl(undefined)
 
-  if (!inputFiles.length) return null
+  if (!rawImages.length) return null
   return (
     <>
       <Stack marginTop={6} marginBottom={4} direction='row' justifyContent='space-between' alignItems='start'>

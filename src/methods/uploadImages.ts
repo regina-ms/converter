@@ -9,7 +9,7 @@ export type CustomError = {
   details: any
 }
 
-type Response = Promise<{ saved: SavedImage[] } | CustomError>
+type Response = Promise<SavedImage[] | CustomError>
 
 export async function uploadImages(files: File[]): Promise<Response> {
   const formData = new FormData()

@@ -1,16 +1,12 @@
 import { Action } from '@/actionsTypes'
-import { ImageData, LikeBufferObject } from '@/app/api/get-file-data/route'
-
-export type TransformedFile = Pick<ImageData, 'name' | 'format'> & { originalBuffer: LikeBufferObject }
-
-type TransformFilesData = TransformedFile[] | { error: string }
+import { SavedImage } from '@/methods/uploadImages'
 
 type TransformFilesArgs = {
-  files: ImageData[]
+  files: SavedImage[]
   actions: Action<'convert' | 'resize'>[]
 }
 
-export async function transformFiles({ files, actions }: TransformFilesArgs): Promise<TransformFilesData> {
+export async function transformFiles({ files, actions }: TransformFilesArgs) {
   const res = await fetch('/api/transform-files', {
     method: 'POST',
     body: JSON.stringify({ files, actions }),

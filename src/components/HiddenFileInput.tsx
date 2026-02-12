@@ -1,5 +1,6 @@
 'use client'
 import { ActionContext } from '@/features/ActionContext'
+import { onlyUniqueFiles } from '@/features/onlyUniqueFiles'
 import { uploadImages } from '@/methods/uploadImages'
 import React, { useContext, useRef, useState } from 'react'
 import { Box, Typography } from '@mui/material'
@@ -10,7 +11,7 @@ export function HiddenFileInput() {
   const [activeButton, setActiveButton] = useState(false)
   const [loading, setLoading] = useState<boolean>(false)
   const ref = useRef<HTMLInputElement>(null)
-  const { setInputFiles, inputFiles } = useContext(ActionContext)
+  const { rawImages, setRawImages } = useContext(ActionContext)
 
   const onDragOver = () => {
     setActiveButton(true)
@@ -27,13 +28,13 @@ export function HiddenFileInput() {
     if (!e.target.files) return
 
     setLoading(true)
-    //const result = await getFileData([...e.target.files])
-    const result = await uploadImages([...e.target.files])
+    const filesToUpload = onlyUniqueFiles(rawImages, [...e.target.files])
+    const result = await uploadImages([...filesToUpload])
 
     if ('error' in result) {
       setError(result.error)
     } else {
-      setInputFiles(inputFiles.concat(result.saved))
+      setRawImages(rawImages.concat(result))
     }
     setLoading(false)
   }
@@ -46,7 +47,7 @@ export function HiddenFileInput() {
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        height: inputFiles.length ? 'fit-content' : '100%',
+        height: rawImages.length ? 'fit-content' : '100%',
         marginY: 5,
       }}
     >

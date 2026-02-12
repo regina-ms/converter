@@ -1,20 +1,14 @@
 import { FORMATS } from '@/actionsTypes'
+import { createSession } from '@/features/session'
 import { cleanupOld } from '@/methods/cleanupOld'
 import { saveFiles } from '@/methods/saveFiles'
 import { SavedImage } from '@/methods/uploadImages'
-import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import path from 'node:path'
-import { v4 } from 'uuid'
 
 export async function POST(request: NextRequest) {
-  const cookieStore = await cookies()
-  let userId = cookieStore.get('guest-id')?.value
-
-  if (!userId) {
-    userId = `guest_${v4()}`
-    cookieStore.set('guest-id', userId, { httpOnly: true, maxAge: 60 * 60 * 24 })
-  }
+  let userId = request.cookies.get('guest-id')?.value
+  if (!userId) userId = await createSession()
 
   await cleanupOld({ userId })
 
@@ -32,7 +26,7 @@ export async function POST(request: NextRequest) {
       }),
     )
 
-    return NextResponse.json({ saved })
+    return NextResponse.json([...saved])
   } catch (err) {
     return NextResponse.json({ error: 'Upload failed', details: (err as Error).message }, { status: 500 })
   }
