@@ -18,9 +18,13 @@ function Actions() {
 
   const goActions = async () => {
     setLoading(true)
-    const transformedFiles = await transformFiles({ files: rawImages, actions })
-    if ('error' in transformedFiles) return setError(transformedFiles.error)
-    setUrl(await getUrlToDownload(transformedFiles))
+    const res = await fetch('/api/transform', { method: 'POST', body: JSON.stringify({ rawImages, actions }) })
+    const { url } = await res.json()
+    console.log(url)
+    setUrl(url)
+    // const transformedFiles = await transformFiles({ files: rawImages, actions })
+    // if ('error' in transformedFiles) return setError(transformedFiles.error)
+    // setUrl(await getUrlToDownload(transformedFiles))
     setLoading(false)
   }
 

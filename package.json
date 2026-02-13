@@ -17,6 +17,7 @@
     "@mui/material": "^7.3.4",
     "@mui/material-nextjs": "^7.3.7",
     "@types/archiver": "^6.0.3",
+    "archiver": "^7.0.1",
     "embla-carousel-react": "^8.6.0",
     "husky": "^9.1.6",
     "jszip": "^3.10.1",

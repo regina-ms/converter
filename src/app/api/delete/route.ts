@@ -1,3 +1,4 @@
+import { getIdFromPath } from '@/features/getIdFromPath'
 import { userDir } from '@/methods/userDir'
 import { promises as fs } from 'fs'
 import { NextRequest, NextResponse } from 'next/server'
@@ -10,8 +11,7 @@ export async function POST(request: NextRequest) {
   }
 
   const fileUrl = await request.text()
-  const split = fileUrl.split('/')
-  const fileId = split[split.length - 1]
+  const fileId = getIdFromPath(fileUrl)
 
   const filePath = path.join(userDir(userId), fileId)
   if (!filePath.startsWith(userDir(userId))) {
