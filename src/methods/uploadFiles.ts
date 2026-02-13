@@ -2,16 +2,17 @@ export type SavedImage = {
   url: string
   name: string
   size: number
+  width?: number
+  height?: number
 }
 
 export type CustomError = {
   error: string
-  details: any
 }
 
-type Response = Promise<SavedImage[] | CustomError>
+type ResponseT = Promise<SavedImage[] | CustomError>
 
-export async function uploadImages(files: File[]): Promise<Response> {
+export async function uploadFiles(files: File[]): Promise<ResponseT> {
   const formData = new FormData()
   files.forEach((file) => formData.append('images', file, file.name))
 

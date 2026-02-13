@@ -1,6 +1,8 @@
 'use client'
 import { ActionContext } from '@/features/ActionContext'
-import { SavedImage } from '@/methods/uploadImages'
+import { convertImageSize } from '@/features/convertImageSize'
+import { deleteFile } from '@/methods/deleteFile'
+import { SavedImage } from '@/methods/uploadFiles'
 import Button from '@mui/material/Button'
 import React, { useContext, useState } from 'react'
 import Image from 'next/image'
@@ -8,17 +10,18 @@ import { Box, ImageList, ImageListItem, Typography } from '@mui/material'
 import theme from '@/theme'
 import styles from './FileList.module.css'
 
-const CustomListItem = ({ file, deleteFile }: { file: SavedImage; deleteFile: (fileUrl: string) => void }) => {
+const CustomListItem = ({ file, deleteImage }: { file: SavedImage; deleteImage: (fileUrl: string) => void }) => {
   const [error, setError] = useState<string>()
 
-  const removeFileHandle = async (fileUrl: string) => {
-    try {
-      await fetch('/api/delete', { method: 'POST', body: fileUrl })
-      deleteFile(fileUrl)
-    } catch {
-      setError('ошибка удаления')
+  const deleteImageHandle = async (fileUrl: string) => {
+    const response = await deleteFile(fileUrl)
+    if ('error' in response) {
+      setError(response.error)
+      return
     }
+    deleteImage(fileUrl)
   }
+
   return (
     <ImageListItem className={styles.imageItem}>
       <Image
@@ -40,19 +43,21 @@ const CustomListItem = ({ file, deleteFile }: { file: SavedImage; deleteFile: (f
           },
         }}
       >
-        <div>{`Размер: ${file.size}`}</div>
-        <Button onClick={() => removeFileHandle(file.url)}>Удалить</Button>
-        {error && <Typography>{error}</Typography>}
+        <Typography>{`Размер: ${convertImageSize(file.size)}`}</Typography>
+        <Typography>{`Высота: ${file.height}`}</Typography>
+        <Typography>{`Ширина: ${file.width}`}</Typography>
+        <Button onClick={() => deleteImageHandle(file.url)}>Удалить</Button>
+        {error && <Typography color='error'>{error}</Typography>}
       </Box>
     </ImageListItem>
   )
 }
 
 function FileList() {
-  const { rawImages, deleteFile } = useContext(ActionContext)
+  const { rawImages, deleteImage } = useContext(ActionContext)
 
   function showImages() {
-    return rawImages.map((file, index) => <CustomListItem file={file} key={index} deleteFile={deleteFile} />)
+    return rawImages.map((file, index) => <CustomListItem file={file} key={index} deleteImage={deleteImage} />)
   }
 
   return (

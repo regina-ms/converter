@@ -1,15 +1,15 @@
 'use client'
-import { SavedImage } from '@/methods/uploadImages'
+import { SavedImage } from '@/methods/uploadFiles'
 import { createContext, PropsWithChildren, useState } from 'react'
 import { Action, ACTION_TYPES } from '@/actionsTypes'
 
 interface ActionContextObject {
   actions: Action<'convert' | 'resize'>[]
-  _setActions: (action: Action<'convert' | 'resize'>) => void
+  setUniqueActions: (action: Action<'convert' | 'resize'>) => void
   deleteAction: (id: keyof typeof ACTION_TYPES) => void
   rawImages: SavedImage[]
   setRawImages: (images: SavedImage[]) => void
-  deleteFile: (dataUrl: string) => void
+  deleteImage: (dataUrl: string) => void
 }
 
 export const ActionContext = createContext({} as ActionContextObject)
@@ -18,12 +18,12 @@ export function ActionContextProvider({ children }: PropsWithChildren) {
   const [actions, setActions] = useState<Action<'convert' | 'resize'>[]>([])
   const [rawImages, setRawImages] = useState<SavedImage[]>([])
 
-  const deleteFile = (dataUrl: string) => {
-    const updatedFiles = rawImages.filter((file) => file.url !== dataUrl)
+  const deleteImage = (url: string) => {
+    const updatedFiles = rawImages.filter((file) => file.url !== url)
     setRawImages(updatedFiles)
   }
 
-  const _setActions = (newAction: Action<'convert' | 'resize'>) => {
+  const setUniqueActions = (newAction: Action<'convert' | 'resize'>) => {
     const existing = actions.find((existingAction) => existingAction.id === newAction.id)
     let updatedActions: Action<'convert' | 'resize'>[] = actions
 
@@ -43,11 +43,11 @@ export function ActionContextProvider({ children }: PropsWithChildren) {
     <ActionContext.Provider
       value={{
         actions,
-        _setActions,
+        setUniqueActions,
         deleteAction,
         rawImages,
         setRawImages,
-        deleteFile,
+        deleteImage,
       }}
     >
       {children}

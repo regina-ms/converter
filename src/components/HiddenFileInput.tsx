@@ -1,7 +1,7 @@
 'use client'
 import { ActionContext } from '@/features/ActionContext'
 import { onlyUniqueFiles } from '@/features/onlyUniqueFiles'
-import { uploadImages } from '@/methods/uploadImages'
+import { uploadFiles } from '@/methods/uploadFiles'
 import React, { useContext, useRef, useState } from 'react'
 import { Box, Typography } from '@mui/material'
 import Button from '@mui/material/Button'
@@ -29,7 +29,7 @@ export function HiddenFileInput() {
 
     setLoading(true)
     const filesToUpload = onlyUniqueFiles(rawImages, [...e.target.files])
-    const result = await uploadImages([...filesToUpload])
+    const result = await uploadFiles([...filesToUpload])
 
     if ('error' in result) {
       setError(result.error)
@@ -54,6 +54,7 @@ export function HiddenFileInput() {
       <input
         type='file'
         multiple
+        accept='image/*'
         style={{ position: 'absolute', inset: 0, opacity: 0 }}
         onDragEnter={onDragOver}
         onDragLeave={onDragLeave}

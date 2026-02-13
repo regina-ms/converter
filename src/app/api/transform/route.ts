@@ -1,7 +1,7 @@
 import { Action } from '@/actionsTypes'
 import { getFormattedOptions } from '@/features/getFormattedOptions'
 import { getIdFromPath } from '@/features/getIdFromPath'
-import { SavedImage } from '@/methods/uploadImages'
+import { SavedImage } from '@/methods/uploadFiles'
 import { userDir } from '@/methods/userDir'
 import archiver from 'archiver'
 import { NextRequest, NextResponse } from 'next/server'
@@ -66,5 +66,7 @@ export async function POST(request: NextRequest) {
 
     await archive.finalize()
   }
+
+  /* TODO: реализовать удаление файлов после скачивания архива, возможно стоит спросить пользователя */
   return NextResponse.json({ url: `/api/download/${userId}` })
 }

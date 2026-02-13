@@ -2,8 +2,6 @@
 import Convert from '@/components/Convert'
 import Resize from '@/components/Resize'
 import { ActionContext } from '@/features/ActionContext'
-import { getUrlToDownload } from '@/methods/getUrlToDownload'
-import { transformFiles } from '@/methods/transformFiles'
 import { Stack, Typography } from '@mui/material'
 import Button from '@mui/material/Button'
 import DownloadIcon from '@mui/icons-material/Download'
@@ -20,11 +18,7 @@ function Actions() {
     setLoading(true)
     const res = await fetch('/api/transform', { method: 'POST', body: JSON.stringify({ rawImages, actions }) })
     const { url } = await res.json()
-    console.log(url)
     setUrl(url)
-    // const transformedFiles = await transformFiles({ files: rawImages, actions })
-    // if ('error' in transformedFiles) return setError(transformedFiles.error)
-    // setUrl(await getUrlToDownload(transformedFiles))
     setLoading(false)
   }
 
