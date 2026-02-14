@@ -3,10 +3,9 @@ set -e
 
 echo "→ Initializing container..."
 
-# === 1. СОЗДАНИЕ ПАПКИ (как раньше) ===
-mkdir -p /app/uploads
-chown -R nextjs:nodejs /app/uploads
-chmod 755 /app/uploads
+# Папка уже создана и имеет владельца nextjs из Dockerfile
+# Просто проверяем, что она существует
+mkdir -p /app/uploads  # На случай если volume пустой (создаст папку от nextjs)
 
 # === 2. ОЧИСТКА ПРИ СТАРТЕ (новое) ===
 echo "→ Cleaning uploads directory on startup..."

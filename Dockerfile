@@ -16,13 +16,13 @@ FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
 # === ДОБАВЛЕНО: Создание папки на этапе сборки (fallback) ===
 # Папка создаётся здесь на случай, если volume не примонтирован
 # Но права будут перезаписаны при старте через entrypoint
 RUN mkdir -p /app/uploads
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
@@ -36,6 +36,10 @@ COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/
 # === ДОБАВЛЕНО: Явное указание UPLOAD_DIR ===
 # Даже если .env не прочитался, приложение знает куда сохранять файлы
 ENV UPLOAD_DIR=/app/uploads
+
+# === МЕНЯЕМ ВЛАДЕЛЬЦА ПАПКИ НА nextjs (пока ещё root) ===
+# Это критично: chown работает только от root
+RUN chown -R nextjs:nodejs /app/uploads
 
 USER nextjs
 
