@@ -1,13 +1,8 @@
-export const PUBLIC_FOLDER = 'public'
+import path from 'node:path'
 
-export const PATHS = {
-  input: 'input',
-  output: 'output',
-}
+export const UPLOAD_DIR = process.env.UPLOAD_DIR
+  ? path.join(process.cwd(), process.env.UPLOAD_DIR)
+  : path.join(process.cwd(), 'uploads')
 
-export const PUBLIC_PATHS = {
-  input: PUBLIC_FOLDER + '/input',
-  output: PUBLIC_FOLDER + '/output',
-}
-
-export const RESULT_PATH = `/${PUBLIC_FOLDER}/result.zip`
+export const ARCHIVE_NAME = 'converter.zip'
+export const TRANSFORMED_DIR_NAME = 'transformed'

@@ -1,35 +1,29 @@
 'use client'
+import { SavedImage } from '@/methods/uploadFiles'
 import { createContext, PropsWithChildren, useState } from 'react'
 import { Action, ACTION_TYPES } from '@/actionsTypes'
-import {ImageData} from '@/app/api/get-file-data/route'
 
 interface ActionContextObject {
   actions: Action<'convert' | 'resize'>[]
-  _setActions: (action: Action<'convert' | 'resize'>) => void
+  setUniqueActions: (action: Action<'convert' | 'resize'>) => void
   deleteAction: (id: keyof typeof ACTION_TYPES) => void
-  inputFiles: ImageData[],
-  setInputFiles: (files:ImageData[]) => void
-  removeInputFile: (dataUrl: string) => void
+  rawImages: SavedImage[]
+  setRawImages: (images: SavedImage[]) => void
+  deleteImage: (dataUrl: string) => void
 }
 
 export const ActionContext = createContext({} as ActionContextObject)
 
 export function ActionContextProvider({ children }: PropsWithChildren) {
   const [actions, setActions] = useState<Action<'convert' | 'resize'>[]>([])
-  const [inputFiles, setInputFiles] = useState<ImageData[]>([])
+  const [rawImages, setRawImages] = useState<SavedImage[]>([])
 
-  const _setInputFiles = (files:ImageData[]) => {
-    const map = new Map<string, ImageData>()
-    files.concat(inputFiles).forEach((file) => map.set(file.dataUrl, file))
-    setInputFiles(Array.from(map.values()))
+  const deleteImage = (url: string) => {
+    const updatedFiles = rawImages.filter((file) => file.url !== url)
+    setRawImages(updatedFiles)
   }
 
-  const removeInputFile = (dataUrl: string) => {
-    const updatedFiles = inputFiles.filter((file) => file.dataUrl !== dataUrl)
-    setInputFiles(updatedFiles)
-  }
-
-  const _setActions = (newAction: Action<'convert' | 'resize'>) => {
+  const setUniqueActions = (newAction: Action<'convert' | 'resize'>) => {
     const existing = actions.find((existingAction) => existingAction.id === newAction.id)
     let updatedActions: Action<'convert' | 'resize'>[] = actions
 
@@ -49,11 +43,11 @@ export function ActionContextProvider({ children }: PropsWithChildren) {
     <ActionContext.Provider
       value={{
         actions,
-        _setActions,
+        setUniqueActions,
         deleteAction,
-        inputFiles,
-        setInputFiles: _setInputFiles,
-        removeInputFile,
+        rawImages,
+        setRawImages,
+        deleteImage,
       }}
     >
       {children}

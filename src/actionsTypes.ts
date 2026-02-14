@@ -1,5 +1,3 @@
-import sharp from 'sharp'
-
 export const ACTION_TYPES = {
   convert: 'convert' as const,
   resize: 'resize' as const,
@@ -22,10 +20,10 @@ export const FORMATS = {
 export type Option<N extends keyof typeof OPTIONS_NAME = keyof typeof OPTIONS_NAME> = {
   id: string
   name: N
-  description?: typeof OPTIONS_NAME[N],
+  description?: (typeof OPTIONS_NAME)[N]
   value: any
-  maxValue?:number
-  minValue?:number
+  maxValue?: number
+  minValue?: number
 }
 
 export type Png = {
@@ -44,36 +42,27 @@ export type Avif = {
 
 export type ResizeOptions = {
   width?: number
-  height?:number
+  height?: number
 }
 
 export type OptionTypes<F extends keyof typeof FORMATS = keyof typeof FORMATS> = {
-  options:
-      F extends 'png'
-          ? Png['options']
-          : F extends 'webp'
-              ? Webp['options']
-              : F extends 'jpeg'
-                  ? Jpeg['options']
-              : F extends 'avif'
-                      ? Avif['options']
-                  : never
+  options: F extends 'png'
+    ? Png['options']
+    : F extends 'webp'
+      ? Webp['options']
+      : F extends 'jpeg'
+        ? Jpeg['options']
+        : F extends 'avif'
+          ? Avif['options']
+          : never
 }
-
 
 export type Action<T extends keyof typeof ACTION_TYPES, F extends keyof typeof FORMATS = keyof typeof FORMATS> = {
   id: T
-  data: T extends 'convert' ? {
-    format: F,
-    options: OptionTypes<F>['options']
-  } : ResizeOptions
+  data: T extends 'convert'
+    ? {
+        format: F
+        options: OptionTypes<F>['options']
+      }
+    : ResizeOptions
 }
-
-
-
-
-
-
-
-
-

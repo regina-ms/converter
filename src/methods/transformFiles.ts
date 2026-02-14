@@ -1,29 +1,9 @@
 import { Action } from '@/actionsTypes'
-import { ImageData, LikeBufferObject } from '@/app/api/get-file-data/route'
+import { CustomError, SavedImage } from '@/methods/uploadFiles'
 
-export type TransformedFile = Pick<ImageData, 'name' | 'format'> & { originalBuffer: LikeBufferObject }
+type ResponseT = Promise<CustomError | { href: string }>
 
-type TransformFilesData = TransformedFile[] | { error: string }
-
-type TransformFilesArgs = {
-  files: ImageData[]
-  actions: Action<'convert' | 'resize'>[]
-}
-
-export async function transformFiles({ files, actions }: TransformFilesArgs): Promise<TransformFilesData> {
-  const res = await fetch('/api/transform-files', {
-    method: 'POST',
-    body: JSON.stringify({ files, actions }),
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
-
-  if (!res.ok) {
-    return { error: res.statusText }
-  }
-
-  const { data } = await res.json()
-
-  return data
+export async function transformFiles(rawImages: SavedImage[], actions: Action<'convert' | 'resize'>[]): ResponseT {
+  const res = await fetch('/api/transform', { method: 'POST', body: JSON.stringify({ rawImages, actions }) })
+  return await res.json()
 }
