@@ -9,18 +9,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const userId = request.cookies.get('guest-id')?.value
 
   if (!userId) {
-    return NextResponse.json('Unauthorized', { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const filePath = path.join(userDir(userId), id)
   if (!filePath.startsWith(userDir(userId))) {
-    return NextResponse.json('Forbidden', { status: 403 })
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   try {
     await fs.access(filePath)
   } catch {
-    return NextResponse.json('Not Fount', { status: 404 })
+    return NextResponse.json({ error: 'Not Found' }, { status: 404 })
   }
 
   const ext = path.extname(filePath).slice(1)
