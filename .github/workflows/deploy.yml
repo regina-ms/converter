@@ -54,7 +54,76 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to server via SSH
+      # === ДОБАВЛЕНО: Подготовка сервера перед деплоем ===
+      # Этот шаг выполняется до основного деплоя и создаёт всю необходимую
+      # инфраструктуру на сервере автоматически
+      - name: Prepare server infrastructure
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # === Создаём рабочую директорию (если первый деплой на этот сервер) ===
+            mkdir -p /var/www/myapp
+            cd /var/www/myapp
+            
+            # === Проверяем/создаём .env файл ===
+            # Твой текущий .env содержит только NODE_ENV=production
+            # Мы добавляем UPLOAD_DIR, если его нет, не трогая существующие настройки
+            if [ ! -f .env ]; then
+              # Первый деплой на этот сервер — создаём .env с нуля
+              echo "NODE_ENV=production" > .env
+              echo "UPLOAD_DIR=/app/uploads" >> .env
+              echo "✓ Created new .env file"
+            else
+              # .env существует — проверяем наличие UPLOAD_DIR
+              if ! grep -q "^UPLOAD_DIR=" .env; then
+                echo "UPLOAD_DIR=/app/uploads" >> .env
+                echo "✓ Added UPLOAD_DIR to existing .env"
+              else
+                echo "✓ UPLOAD_DIR already exists in .env"
+              fi
+            fi
+            
+            # === Создаём/обновляем docker-compose.yml ===
+            # Этот файл управляет контейнером: порты, volumes, restart policy
+            # Перезаписываем каждый раз, чтобы гарантировать актуальную конфигурацию
+            cat > docker-compose.yml << 'EOF'
+            version: '3.8'
+            
+            services:
+              app:
+                image: ghcr.io/regina-ms/converter:latest
+                container_name: nextjs_app
+                restart: unless-stopped
+                ports:
+                  - "127.0.0.1:3000:3000"
+                env_file:
+                  - .env
+                volumes:
+                  # Критично: папка uploads на хосте синхронизируется с контейнером
+                  # Это обеспечивает persistence данных между перезапусками
+                  - ./uploads:/app/uploads:rw
+                healthcheck:
+                  test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3000"]
+                  interval: 30s
+                  timeout: 10s
+                  retries: 10
+                  start_period: 2m
+            EOF
+            echo "✓ docker-compose.yml ready"
+            
+            # === Создаём папку uploads на хосте ===
+            # Entrypoint в контейнере тоже создаст её, но это "подстраховка"
+            # и позволяет видеть папку сразу на хосте для бэкапов/отладки
+            mkdir -p uploads
+            echo "✓ uploads directory ready"
+            
+            echo "→ Infrastructure prepared successfully"
+
+      # === ИЗМЕНЕНО: Основной деплой с проверками ===
+      - name: Deploy application
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -62,8 +131,45 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/myapp
-            echo "Deploying PR #${{ github.event.pull_request.number || 'manual' }}"
+            
+            echo "→ Pulling image: ghcr.io/regina-ms/converter:latest"
             docker compose pull app
+            
+            echo "→ Starting container..."
             docker compose up -d --no-deps app
-            docker image prune -f
-            echo "Deployment completed!"
+            
+            # === ДОБАВЛЕНО: Ожидание и проверка запуска ===
+            # Даём контейнеру 5 секунд на инициализацию
+            sleep 5
+            
+            # Проверяем, что контейнер действительно запущен
+            if docker ps | grep -q "nextjs_app"; then
+              echo "✓ Container is running"
+              echo "→ Recent logs:"
+              docker compose logs --tail=3 app
+            else
+              echo "✗ Container failed to start!"
+              echo "→ Error logs:"
+              docker compose logs app
+              exit 1  # Прерываем workflow с ошибкой
+            fi
+            
+            # === ДОБАВЛЕНО: Проверка создания папки uploads внутри контейнера ===
+            # Убеждаемся, что entrypoint сработал и папка создана с правильными правами
+            if docker exec nextjs_app ls -la /app/uploads > /dev/null 2>&1; then
+              echo "✓ Uploads directory accessible in container"
+              docker exec nextjs_app ls -la /app | grep uploads
+            else
+              echo "⚠ Warning: uploads directory not accessible (will be created on first upload)"
+            fi
+            
+            # === ИЗМЕНЕНО: Улучшенная очистка образов ===
+            # Удаляем только образы старше 7 дней (168 часов), а не все dangling
+            # Это предотвращает удаление только что скачанного образа при ошибке
+            docker image prune -af --filter "until=168h"
+            echo "✓ Cleaned old images (older than 7 days)"
+            
+            echo ""
+            echo "🚀 Deployment completed successfully!"
+            echo "PR: #${{ github.event.pull_request.number || 'manual' }}"
+            echo "Image: ghcr.io/regina-ms/converter:latest"
