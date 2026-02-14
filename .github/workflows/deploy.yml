@@ -12,7 +12,6 @@ env:
 
 jobs:
   build-and-push:
-    # Только если PR смержен или ручной запуск
     if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
@@ -23,7 +22,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: master  # Явно checkout ветки master
+          ref: master
 
       - name: Log in to Container Registry
         uses: docker/login-action@v3
@@ -39,7 +38,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=sha,prefix=,suffix=,format=short
-            type=raw,value=latest  # Всегда тегаем как latest
+            type=raw,value=latest
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -68,15 +67,3 @@ jobs:
             docker compose up -d --no-deps app
             docker image prune -f
             echo "Deployment completed!"
-
-      - name: Comment on PR
-        if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '🚀 Деплой на продакшен завершён успешно!'
-            })
