@@ -33,6 +33,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # и гарантирует, что папка uploads создана с правильными правами
 COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/
 
+# === ДОБАВЛЕНО: Явное указание UPLOAD_DIR ===
+# Даже если .env не прочитался, приложение знает куда сохранять файлы
+ENV UPLOAD_DIR=/app/uploads
+
 # === МЕНЯЕМ ВЛАДЕЛЬЦА ПАПКИ НА nextjs (пока ещё root) ===
 # Это критично: chown работает только от root
 RUN chown -R nextjs:nodejs /app/uploads
