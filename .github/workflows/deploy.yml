@@ -74,16 +74,7 @@ jobs:
             if [ ! -f .env ]; then
               # Первый деплой на этот сервер — создаём .env с нуля
               echo "NODE_ENV=production" > .env
-              echo "UPLOAD_DIR=/app/uploads" >> .env
               echo "✓ Created new .env file"
-            else
-              # .env существует — проверяем наличие UPLOAD_DIR
-              if ! grep -q "^UPLOAD_DIR=" .env; then
-                echo "UPLOAD_DIR=/app/uploads" >> .env
-                echo "✓ Added UPLOAD_DIR to existing .env"
-              else
-                echo "✓ UPLOAD_DIR already exists in .env"
-              fi
             fi
             
             # === Создаём/обновляем docker-compose.yml ===
