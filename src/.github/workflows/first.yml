@@ -1,5 +1,8 @@
 name: First Workflow
-on: [push]
+on:
+  push:
+    branches:
+      - deploy-new
 
 jobs:
   run-first-command:
