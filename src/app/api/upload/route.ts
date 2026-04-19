@@ -1,5 +1,4 @@
 import { createSession } from '@/features/session'
-import { cleanupOld } from '@/methods/cleanupOld'
 import { saveFiles } from '@/methods/saveFiles'
 import { SavedImage } from '@/methods/uploadFiles'
 import { NextRequest, NextResponse } from 'next/server'
@@ -9,8 +8,6 @@ import sharp from 'sharp'
 export async function POST(request: NextRequest) {
   let userId = request.cookies.get('guest-id')?.value
   if (!userId) userId = await createSession()
-
-  await cleanupOld({ userId })
 
   try {
     const formData = await request.formData()
