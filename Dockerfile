@@ -46,4 +46,7 @@ RUN mkdir -p /app/uploads && chown -R deployer:deployer /app/uploads
 
 EXPOSE 3000
 
+# Переключаемся на пользователя deployer ===
+USER deployer
+
 CMD ["pnpm", "start"]
