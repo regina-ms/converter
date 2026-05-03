@@ -27,6 +27,10 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
+# Создаём пользователя deployer ===
+RUN addgroup -g 1002 deployer && \
+    adduser -D -u 1001 -G deployer deployer
+
 # Копируем только необходимое из этапа сборки
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/pnpm-lock.yaml ./
@@ -37,7 +41,8 @@ COPY --from=builder /app/node_modules ./node_modules
 # Устанавливаем только продакшен-зависимости (на всякий случай)
 RUN pnpm install --prod --frozen-lockfile
 
-RUN mkdir -p /app/uploads
+Создаём uploads и даём права deployer ===
+RUN mkdir -p /app/uploads && chown -R deployer:deployer /app/uploads
 
 EXPOSE 3000
 
