@@ -1,16 +1,24 @@
 import React from 'react'
+import { cookies } from 'next/headers'
 import Actions from '@/components/Actions'
 import { ActionContextProvider } from '@/features/ActionContext'
 import FileList from '@/components/FileList/FileList'
 import { HiddenFileInput } from '@/components/HiddenFileInput'
+import { userDir } from '@/methods/userDir'
+import { existsSync } from 'node:fs'
+import { SavedImage } from '@/methods/uploadFiles'
+import { getUserImages } from '@/methods/getUserImages'
 
-export default function Page() {
-
+export default async function Page() {
+  let existingUserImages: SavedImage[] = []
+  const cookieStore = await cookies()
+  const userId = cookieStore.get('guest-id')?.value
+  if (userId && existsSync(userDir(userId))) existingUserImages = await getUserImages(userId)
   return (
-    <ActionContextProvider>
-        <HiddenFileInput />
-        <Actions />
-        <FileList />
+    <ActionContextProvider existingUserImagesList={existingUserImages}>
+      <HiddenFileInput />
+      <Actions />
+      <FileList />
     </ActionContextProvider>
   )
 }

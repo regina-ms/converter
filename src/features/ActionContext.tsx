@@ -12,11 +12,15 @@ interface ActionContextObject {
   deleteImage: (dataUrl: string) => void
 }
 
+interface ActionContextProviderProps extends PropsWithChildren {
+  existingUserImagesList: SavedImage[]
+}
+
 export const ActionContext = createContext({} as ActionContextObject)
 
-export function ActionContextProvider({ children }: PropsWithChildren) {
+export function ActionContextProvider({ children, existingUserImagesList }: ActionContextProviderProps) {
   const [actions, setActions] = useState<Action<'convert' | 'resize'>[]>([])
-  const [rawImages, setRawImages] = useState<SavedImage[]>([])
+  const [rawImages, setRawImages] = useState<SavedImage[]>(existingUserImagesList)
 
   const deleteImage = (url: string) => {
     const updatedFiles = rawImages.filter((file) => file.url !== url)
