@@ -28,8 +28,8 @@ ENV NODE_ENV=production
 ENV PORT=3000
 
 # Создаём пользователя deployer ===
-RUN addgroup -g 1002 deployer
-RUN adduser -D -u 1001 -G deployer deployer \
+RUN addgroup --system --gid 1001 deployer
+RUN adduser --system --uid 1001 deployer
 
 RUN chown deployer:deployer .
 
