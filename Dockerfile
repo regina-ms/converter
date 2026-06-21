@@ -29,24 +29,21 @@ ENV PORT=3000
 
 # Создаём пользователя deployer ===
 RUN addgroup -g 1002 deployer && \
-    adduser -D -u 1001 -G deployer deployer
+    adduser -D -u 1001 -G deployer deployer \
 
-# Копируем только необходимое из этапа сборки
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/pnpm-lock.yaml ./
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/node_modules ./node_modules
+RUN chown -R deployer:deployer .
 
-# === ДОБАВЛЕНО: даём deployer права на всю /app ===
-RUN chown -R deployer:deployer /app
+COPY --from=builder --chown=deployer:deployer /app/public ./public
+COPY --from=builder --chown=deployer:deployer /app/.next/standalone ./
+COPY --from=builder --chown=deployer:deployer /app/.next/static ./.next/static
+COPY --from=builder --chown=deployer:deployer /app/node_modules ./node_modules
 
-# Создаём uploads (теперь deployer уже владеет /app, так что mkdir отработает)
 RUN mkdir -p /app/uploads
+RUN chown deployer:deployer /app/uploads
 
 EXPOSE 3000
 
 # Переключаемся на пользователя deployer ===
 USER deployer
 
-CMD ["pnpm", "start"]
+CMD node server.js
