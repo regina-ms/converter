@@ -38,9 +38,11 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/node_modules ./node_modules
 
+# === ДОБАВЛЕНО: даём deployer права на всю /app ===
+RUN chown -R deployer:deployer /app
 
-# Создаём uploads и даём права deployer ===
-RUN mkdir -p /app/uploads && chown -R deployer:deployer /app/uploads
+# Создаём uploads (теперь deployer уже владеет /app, так что mkdir отработает)
+RUN mkdir -p /app/uploads
 
 EXPOSE 3000
 
