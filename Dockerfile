@@ -31,7 +31,7 @@ ENV PORT=3000
 RUN addgroup -g 1002 deployer && \
     adduser -D -u 1001 -G deployer deployer \
 
-RUN chown -R deployer:deployer .
+RUN chown deployer:deployer .
 
 COPY --from=builder --chown=deployer:deployer /app/public ./public
 COPY --from=builder --chown=deployer:deployer /app/.next/standalone ./
