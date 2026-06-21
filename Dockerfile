@@ -38,8 +38,6 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/node_modules ./node_modules
 
-# Устанавливаем только продакшен-зависимости (на всякий случай)
-RUN pnpm install --frozen-lockfile
 
 # Создаём uploads и даём права deployer ===
 RUN mkdir -p /app/uploads && chown -R deployer:deployer /app/uploads
