@@ -1,6 +1,6 @@
 services:
   app:
-    build: .
+    image: ghcr.io/regina-ms/converter:latest
     container_name: my-nextjs-app
     restart: unless-stopped
     ports:
@@ -8,6 +8,6 @@ services:
     volumes:
       # Монтируем папку uploads с VM внутрь контейнера
       # Левая часть — путь на VM, правая — внутри контейнера
-      - /home/deployer/my-app/uploads:/app/uploads
+      - /home/deploy/app/uploads:/app/uploads
     environment:
       - NODE_ENV=production
