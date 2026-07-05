@@ -36,7 +36,7 @@ RUN chown deployer:deployer .
 COPY --from=builder --chown=deployer:deployer /app/public ./public
 COPY --from=builder --chown=deployer:deployer /app/.next/standalone ./
 COPY --from=builder --chown=deployer:deployer /app/.next/static ./.next/static
-COPY --from=builder --chown=deployer:deployer /app/node_modules ./node_modules
+# COPY --from=builder --chown=deployer:deployer /app/node_modules ./node_modules
 
 RUN mkdir -p /app/uploads
 RUN chown deployer:deployer /app/uploads
