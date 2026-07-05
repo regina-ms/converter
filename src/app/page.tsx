@@ -13,6 +13,7 @@ export default async function Page() {
   let existingUserImages: SavedImage[] = []
   const cookieStore = await cookies()
   const userId = cookieStore.get('guest-id')?.value
+  /* TODO: удалить архив из папки пользователя после скачивания, тк в existingUserImages попадает архив и sharp падает либо поправить фильтрацию в getUserImages  */
   if (userId && existsSync(userDir(userId))) existingUserImages = await getUserImages(userId)
   return (
     <ActionContextProvider existingUserImagesList={existingUserImages}>
