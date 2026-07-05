@@ -59,7 +59,7 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.PORT }}
-          command_timeout: 10m
+          command_timeout: 15m
           script: |
             echo ${{ secrets.GH_PAT }} | docker login ghcr.io -u regina-ms --password-stdin
             cd /home/deploy/app
