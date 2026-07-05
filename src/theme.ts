@@ -6,11 +6,6 @@ const theme = createTheme({
   typography: {
     fontFamily: 'var(--font-ubuntu_condensed)',
   },
-  palette: {
-    primary: {
-      main: '#fff98d',
-    },
-  },
 })
 
 export default theme
