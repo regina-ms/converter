@@ -1,10 +1,9 @@
 import { Action } from '@/actionsTypes'
-import { ARCHIVE_NAME, TRANSFORMED_DIR_NAME } from '@/constants'
+import { ARCHIVE_NAME, COOKIE_ID, USER_RAW_IMAGES_FOLDER, USER_TRANSFORMED_IMAGES_FOLDER } from '@/constants'
 import { getFormattedOptions } from '@/features/getFormattedOptions'
 import { getIdFromPath } from '@/features/getIdFromPath'
-import { deleteDir } from '@/methods/deleteDir'
 import { SavedImage } from '@/methods/uploadFiles'
-import { userDir } from '@/methods/userDir'
+import { imagesFolder, userDir } from '@/methods/userDir'
 import archiver from 'archiver'
 import { NextRequest, NextResponse } from 'next/server'
 import { promises as fs } from 'fs'
@@ -28,14 +27,9 @@ async function createTransformedFiles(
     rawFiles.map(async (image) => {
       const convert = actions.find((action) => action.id === 'convert') as Action<'convert'> | undefined
       const resize = actions.find((action) => action.id === 'resize') as Action<'resize'> | undefined
-      const outputDir = path.join(userDir(userId), TRANSFORMED_DIR_NAME)
+      const outputDir = imagesFolder(userId, USER_TRANSFORMED_IMAGES_FOLDER)
       await fs.mkdir(outputDir, { recursive: true })
-      const imagePath = path.join(userDir(userId), getIdFromPath(image.url))
-
-      if (!imagePath.startsWith(userDir(userId)) || !outputDir.startsWith(userDir(userId))) {
-        throw NextResponse.json('Forbidden', { status: 403 })
-      }
-
+      const imagePath = path.join(imagesFolder(userId, USER_RAW_IMAGES_FOLDER), getIdFromPath(image.url))
       let buffer = sharp(imagePath)
 
       if (resize) buffer = buffer.resize(resize.data)
@@ -68,7 +62,7 @@ async function createArchive(userId: string, transformedData: TransformedFilesDa
 }
 
 export async function POST(request: NextRequest) {
-  let userId = request.cookies.get('guest-id')?.value
+  let userId = request.cookies.get(COOKIE_ID)?.value
   if (!userId) {
     return NextResponse.json({ error: 'Нарушение прав доступа' }, { status: 401 })
   }
@@ -79,8 +73,6 @@ export async function POST(request: NextRequest) {
 
     if (processedImages.length > 0) {
       const { href } = await createArchive(userId, processedImages)
-      const transformedDir = path.join(userDir(userId), TRANSFORMED_DIR_NAME)
-      await deleteDir(transformedDir)
 
       return NextResponse.json({ href })
     } else {

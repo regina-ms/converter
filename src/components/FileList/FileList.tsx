@@ -46,6 +46,7 @@ const CustomListItem = ({ file, deleteImage }: { file: SavedImage; deleteImage: 
         <Typography>{`Размер: ${convertImageSize(file.size)}`}</Typography>
         <Typography>{`Высота: ${file.height}`}</Typography>
         <Typography>{`Ширина: ${file.width}`}</Typography>
+        <Typography>{`Расширение: ${file.ext}`}</Typography>
         <Button onClick={() => deleteImageHandle(file.url)}>Удалить</Button>
         {error && <Typography color='error'>{error}</Typography>}
       </Box>

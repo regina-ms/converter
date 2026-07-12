@@ -1,21 +1,19 @@
-import { userDir } from '@/methods/userDir'
+import { imagesFolder } from '@/methods/userDir'
 import { NextRequest, NextResponse } from 'next/server'
 import { promises as fs } from 'fs'
 import { createReadStream } from 'node:fs'
 import path from 'node:path'
+import { COOKIE_ID, USER_RAW_IMAGES_FOLDER } from '@/constants'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const userId = request.cookies.get('guest-id')?.value
+  const userId = request.cookies.get(COOKIE_ID)?.value
 
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const filePath = path.join(userDir(userId), id)
-  if (!filePath.startsWith(userDir(userId))) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
+  const filePath = path.join(imagesFolder(userId, USER_RAW_IMAGES_FOLDER), id)
 
   try {
     await fs.access(filePath)

@@ -39,7 +39,9 @@ function Actions() {
       {error && <Typography color='error'>{error}</Typography>}
       {href && (
         <Button
-          onClick={() => setHref(undefined)}
+          onClick={async () => {
+            setHref(undefined)
+          }}
           endIcon={<DownloadIcon />}
           download='converted-images.zip'
           href={href}

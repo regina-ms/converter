@@ -4,6 +4,7 @@ export type SavedImage = {
   size: number
   width?: number
   height?: number
+  ext?: string
 }
 
 export type CustomError = {

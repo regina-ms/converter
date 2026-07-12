@@ -1,21 +1,19 @@
 import { getIdFromPath } from '@/features/getIdFromPath'
-import { userDir } from '@/methods/userDir'
+import { imagesFolder } from '@/methods/userDir'
 import { promises as fs } from 'fs'
 import { NextRequest, NextResponse } from 'next/server'
 import path from 'node:path'
+import { COOKIE_ID, USER_RAW_IMAGES_FOLDER } from '@/constants'
 
 export async function POST(request: NextRequest) {
-  let userId = request.cookies.get('guest-id')?.value
+  let userId = request.cookies.get(COOKIE_ID)?.value
   if (!userId) {
     return NextResponse.json({ error: 'Нарушение прав доступа' }, { status: 500 })
   }
 
   const fileUrl = await request.text()
   const fileId = getIdFromPath(fileUrl)
-  const filePath = path.join(userDir(userId), fileId)
-  if (!filePath.startsWith(userDir(userId))) {
-    return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
-  }
+  const filePath = path.join(imagesFolder(userId, USER_RAW_IMAGES_FOLDER), fileId)
 
   try {
     await fs.access(filePath)

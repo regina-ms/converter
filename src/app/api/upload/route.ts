@@ -4,9 +4,10 @@ import { SavedImage } from '@/methods/uploadFiles'
 import { NextRequest, NextResponse } from 'next/server'
 import path from 'node:path'
 import sharp from 'sharp'
+import { COOKIE_ID } from '@/constants'
 
 export async function POST(request: NextRequest) {
-  let userId = request.cookies.get('guest-id')?.value
+  let userId = request.cookies.get(COOKIE_ID)?.value
   if (!userId) userId = await createSession()
 
   try {
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
         const url = await saveFiles({ userId, buffer, ext })
         const metadata = await sharp(buffer).metadata()
         const { width, height } = metadata
-        return { url, name: image.name, size: image.size, width, height }
+        return { url, name: image.name, size: image.size, width, height, ext }
       }),
     )
 
