@@ -5,6 +5,6 @@ import { COOKIE_ID } from '@/constants'
 export async function createSession() {
   const cookieStore = await cookies()
   const userId = v4()
-  cookieStore.set(COOKIE_ID, userId, { httpOnly: true, maxAge: 60 * 60 * 24 })
+  cookieStore.set(COOKIE_ID, userId, { httpOnly: true, maxAge: 31_536_000 })
   return userId
 }

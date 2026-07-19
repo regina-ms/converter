@@ -17,7 +17,6 @@ export default async function Page() {
   const userId = cookieStore.get(COOKIE_ID)?.value
   const userFolder = userId && existsSync(userDir(userId))
 
-  /* TODO: удалить архив из папки пользователя после скачивания, тк в existingUserImages попадает архив и sharp падает либо поправить фильтрацию в getUserImages  */
   if (userFolder) {
     existingUserImages = await getRawUserImages(userId)
   }
