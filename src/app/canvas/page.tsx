@@ -1,7 +1,7 @@
 'use client'
-import React, { useEffect, useRef, useState } from 'react'
-import theme from '@/theme'
+import React, { useEffect, useReducer, useRef, useState } from 'react'
 import { CANVAS_LINE_WIDTH, CANVAS_MARK_SIZE } from '@/constants'
+import theme from '@/theme'
 
 interface Position {
   x: number
@@ -23,16 +23,228 @@ type CornersCoords = {
   [key in Corner]: Position
 }
 
+type Phase =
+  | { name: 'idle'; cornersCoords?: CornersCoords }
+  | { name: 'drawing'; startPosition: Position }
+  | { name: 'stretchingCorner'; corner: Corner; startPosition: Position; cornersCoords: CornersCoords }
+  | { name: 'stretchingSide'; side: Side; startPosition: Position; cornersCoords: CornersCoords }
+
+interface State {
+  phase: Phase
+  selectionData?: PositionData
+}
+
+type Action =
+  | { type: 'DRAW_START'; payload: { startPosition: Position } }
+  | { type: 'CORNER_STRETCH_START'; payload: { corner: Corner; startPosition: Position } }
+  | { type: 'SIDE_STRETCH_START'; payload: { side: Side; startPosition: Position } }
+  | {
+      type: 'MOUSE_MOVE'
+      payload: {
+        currentPosition: Position
+      }
+    }
+  | {
+      type: 'INTERACTION_END'
+      payload: { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D; imageData: ImageData }
+    }
+
+function reducer(state: State, action: Action): State {
+  let width: number
+  let height: number
+
+  switch (action.type) {
+    case 'SIDE_STRETCH_START':
+      if (state.phase.name !== 'idle' || !state.phase.cornersCoords) return state
+      return {
+        ...state,
+        phase: {
+          name: 'stretchingSide',
+          side: action.payload.side,
+          startPosition: action.payload.startPosition,
+          cornersCoords: state.phase.cornersCoords,
+        },
+      }
+    case 'CORNER_STRETCH_START':
+      if (state.phase.name !== 'idle' || !state.phase.cornersCoords) return state
+      return {
+        ...state,
+        phase: {
+          name: 'stretchingCorner',
+          corner: action.payload.corner,
+          startPosition: action.payload.startPosition,
+          cornersCoords: state.phase.cornersCoords,
+        },
+      }
+    case 'MOUSE_MOVE':
+      if (state.phase.name === 'idle') {
+        return state
+      }
+
+      width = action.payload.currentPosition.x - state.phase.startPosition.x
+      height = action.payload.currentPosition.y - state.phase.startPosition.y
+
+      if (state.phase.name === 'stretchingSide') {
+        if (state.phase.side === 'top' || state.phase.side === 'bottom') {
+          width = Math.abs(state.selectionData?.width || 0)
+        }
+        if (state.phase.side === 'left' || state.phase.side === 'right') {
+          height = Math.abs(state.selectionData?.height || 0)
+        }
+      }
+
+      return {
+        ...state,
+        selectionData: { x: state.phase.startPosition.x, y: state.phase.startPosition.y, width, height },
+      }
+    case 'DRAW_START':
+      return {
+        ...state,
+        phase: {
+          name: 'drawing',
+          startPosition: action.payload.startPosition,
+        },
+      }
+    case 'INTERACTION_END':
+      if (!state.selectionData) return state
+      const rawCorners = [
+        [state.selectionData.x, state.selectionData.y],
+        [state.selectionData.x + state.selectionData.width, state.selectionData.y],
+        [state.selectionData.x, state.selectionData.y + state.selectionData.height],
+        [state.selectionData.x + state.selectionData.width, state.selectionData.y + state.selectionData.height],
+      ]
+
+      return {
+        ...state,
+        phase: {
+          name: 'idle',
+          cornersCoords: namedCorners(rawCorners, state.selectionData),
+        },
+      }
+
+    default:
+      return state
+  }
+}
+
+function getActiveSide(currentPosition: Position, corners: CornersCoords) {
+  const { x, y } = currentPosition
+
+  const sides: SideActive = {
+    left:
+      x > corners.topLeft.x - CANVAS_LINE_WIDTH &&
+      x < corners.topLeft.x + CANVAS_LINE_WIDTH &&
+      y > corners.topLeft.y + CANVAS_MARK_SIZE &&
+      y < corners.bottomLeft.y - CANVAS_MARK_SIZE,
+    right:
+      x > corners.topRight.x - CANVAS_LINE_WIDTH &&
+      x < corners.topRight.x + CANVAS_LINE_WIDTH &&
+      y > corners.topRight.y + CANVAS_MARK_SIZE &&
+      y < corners.bottomRight.y - CANVAS_MARK_SIZE,
+    top:
+      x > corners.topLeft.x + CANVAS_MARK_SIZE &&
+      x < corners.topRight.x - CANVAS_MARK_SIZE &&
+      y > corners.topLeft.y - CANVAS_LINE_WIDTH &&
+      y < corners.topLeft.y + CANVAS_LINE_WIDTH,
+    bottom:
+      x > corners.bottomLeft.x + CANVAS_MARK_SIZE &&
+      x < corners.bottomRight.x - CANVAS_MARK_SIZE &&
+      y > corners.bottomLeft.y - CANVAS_LINE_WIDTH &&
+      y < corners.bottomLeft.y + CANVAS_LINE_WIDTH,
+  }
+
+  return (Object.entries(sides) as [Side, boolean][]).find(([name, isActive]) => isActive)
+}
+function getStartPosition(side: Side, corners: CornersCoords): Position {
+  switch (side) {
+    case 'top':
+      return corners.bottomLeft
+    case 'left':
+      return corners.topRight
+    case 'bottom':
+      return corners.topLeft
+    case 'right':
+      return corners.topLeft
+  }
+}
+function getActiveCorner(currentPosition: Position, corners: CornersCoords) {
+  const { x, y } = currentPosition
+  return (Object.entries(corners) as [Corner, Position][]).find(([cornerName, position]) => {
+    return (
+      x > position.x - CANVAS_MARK_SIZE &&
+      x < position.x + CANVAS_MARK_SIZE &&
+      y > position.y - CANVAS_MARK_SIZE &&
+      y < position.y + CANVAS_MARK_SIZE
+    )
+  })
+}
+function setSideCursor(currentPosition: Position, corners: CornersCoords) {
+  const activeSide = getActiveSide(currentPosition, corners)
+  if (!activeSide) {
+    return
+  }
+
+  if (activeSide[0] === 'top' || activeSide[0] === 'bottom') {
+    document.body.style.cursor = 'ns-resize'
+  } else {
+    document.body.style.cursor = 'ew-resize'
+  }
+}
+function setCornerCursor(currentPosition: Position, corners: CornersCoords) {
+  const activeCorner = getActiveCorner(currentPosition, corners)
+  if (!activeCorner) return
+
+  switch (activeCorner[0]) {
+    case 'topLeft':
+      document.body.style.cursor = 'nwse-resize'
+      break
+    case 'topRight':
+      document.body.style.cursor = 'nesw-resize'
+      break
+    case 'bottomLeft':
+      document.body.style.cursor = 'nesw-resize'
+      break
+    case 'bottomRight':
+      document.body.style.cursor = 'nwse-resize'
+      break
+  }
+}
+function setCursor(currentPosition: Position, corners: CornersCoords) {
+  document.body.style.cursor = 'auto'
+  setCornerCursor(currentPosition, corners)
+  setSideCursor(currentPosition, corners)
+}
+function getOppositeCornerPosition(currentCorner: [string, Position], corners: CornersCoords) {
+  const { x, y } = currentCorner[1]
+  return (Object.values(corners) as Position[]).find((position) => {
+    return position.x !== x && position.y !== y
+  })
+}
+function namedCorners(rawCorners: number[][], selectionData: PositionData) {
+  const xValues = rawCorners.map(([x, y]) => x)
+  const yValues = rawCorners.map(([x, y]) => y)
+  const topLeft = { x: Math.min(...xValues), y: Math.min(...yValues) }
+  return {
+    topLeft,
+    topRight: {
+      x: topLeft.x + Math.abs(selectionData.width),
+      y: topLeft.y,
+    },
+    bottomLeft: {
+      x: topLeft.x,
+      y: topLeft.y + Math.abs(selectionData.height),
+    },
+    bottomRight: {
+      x: topLeft.x + Math.abs(selectionData.width),
+      y: topLeft.y + Math.abs(selectionData.height),
+    },
+  }
+}
+
 function Page() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-
   const [imageData, setImageData] = useState<ImageData>()
-  const [startPoint, setStartPoint] = useState<Position>()
-  const [corners, setCorners] = useState<CornersCoords>()
-  const [selectionData, setSelectionData] = useState<PositionData>()
-  const [interaction, setInteraction] = useState<boolean>(false)
-  const [activeCorner, setActiveCorner] = useState<[Corner, Position]>()
-  const [activeSide, setActiveSide] = useState<Side>()
+  const [state, dispatch] = useReducer(reducer, { phase: { name: 'idle' } })
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -50,6 +262,60 @@ function Page() {
     }
   }, [])
 
+  useEffect(() => {
+    /** TODO: убрать мигание прямоугольника при растягивании*/
+    const canvas = canvasRef.current
+    const ctx = canvas?.getContext('2d')
+    if (!canvas || !ctx || !imageData) return
+
+    if (state.phase.name !== 'idle' && state.selectionData) {
+      ctx.strokeStyle = state.phase.name === 'drawing' ? theme.palette.primary.main : '#fff'
+      if (state.phase.name === 'drawing') ctx.setLineDash([5, 5])
+
+      ctx.lineWidth = CANVAS_LINE_WIDTH
+      ctx.putImageData(imageData, 0, 0)
+      ctx.strokeRect(
+        state.phase.startPosition.x,
+        state.phase.startPosition.y,
+        state.selectionData.width,
+        state.selectionData.height,
+      )
+
+      return
+    }
+
+    if (state.phase.name === 'idle' && state.selectionData && state.phase.cornersCoords) {
+      ctx.putImageData(imageData, 0, 0)
+      ctx.strokeStyle = '#fff'
+      ctx.lineWidth = CANVAS_LINE_WIDTH
+      ctx.setLineDash([5, 5])
+      ctx.strokeRect(
+        state.selectionData.x,
+        state.selectionData.y,
+        state.selectionData.width,
+        state.selectionData.height,
+      )
+
+      ctx.beginPath()
+      ctx.rect(0, 0, canvas.width, canvas.height)
+      ctx.rect(state.selectionData.x, state.selectionData.y, state.selectionData.width, state.selectionData.height)
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+      ctx.fill('evenodd')
+
+      ctx.setLineDash([])
+      ctx.fillStyle = '#fff'
+
+      Object.values(state.phase.cornersCoords).forEach((position) => {
+        ctx.fillRect(
+          position.x - CANVAS_MARK_SIZE / 2,
+          position.y - CANVAS_MARK_SIZE / 2,
+          CANVAS_MARK_SIZE,
+          CANVAS_MARK_SIZE,
+        )
+      })
+    }
+  }, [state])
+
   function getCanvasCoordinates(e: React.MouseEvent<HTMLElement>) {
     const canvas = canvasRef.current
     if (!canvas) return { x: 0, y: 0 }
@@ -63,221 +329,52 @@ function Page() {
       y: (e.clientY - rect.top) * scaleY,
     }
   }
-  function namedCorners(rawCorners: number[][]) {
-    if (!selectionData) return
-    const xValues = rawCorners.map(([x, y]) => x)
-    const yValues = rawCorners.map(([x, y]) => y)
-    const topLeft = { x: Math.min(...xValues), y: Math.min(...yValues) }
-    return {
-      topLeft,
-      topRight: {
-        x: topLeft.x + Math.abs(selectionData.width),
-        y: topLeft.y,
-      },
-      bottomLeft: {
-        x: topLeft.x,
-        y: topLeft.y + Math.abs(selectionData.height),
-      },
-      bottomRight: {
-        x: topLeft.x + Math.abs(selectionData.width),
-        y: topLeft.y + Math.abs(selectionData.height),
-      },
-    }
-  }
-  function getActiveSide(e: React.MouseEvent<HTMLElement>) {
-    if (!corners) return
-    const { x, y } = getCanvasCoordinates(e)
 
-    const sides: SideActive = {
-      left:
-        x > corners.topLeft.x - CANVAS_LINE_WIDTH &&
-        x < corners.topLeft.x + CANVAS_LINE_WIDTH &&
-        y > corners.topLeft.y + CANVAS_MARK_SIZE &&
-        y < corners.bottomLeft.y - CANVAS_MARK_SIZE,
-      right:
-        x > corners.topRight.x - CANVAS_LINE_WIDTH &&
-        x < corners.topRight.x + CANVAS_LINE_WIDTH &&
-        y > corners.topRight.y + CANVAS_MARK_SIZE &&
-        y < corners.bottomRight.y - CANVAS_MARK_SIZE,
-      top:
-        x > corners.topLeft.x + CANVAS_MARK_SIZE &&
-        x < corners.topRight.x - CANVAS_MARK_SIZE &&
-        y > corners.topLeft.y - CANVAS_LINE_WIDTH &&
-        y < corners.topLeft.y + CANVAS_LINE_WIDTH,
-      bottom:
-        x > corners.bottomLeft.x + CANVAS_MARK_SIZE &&
-        x < corners.bottomRight.x - CANVAS_MARK_SIZE &&
-        y > corners.bottomLeft.y - CANVAS_LINE_WIDTH &&
-        y < corners.bottomLeft.y + CANVAS_LINE_WIDTH,
-    }
-
-    return (Object.entries(sides) as [Side, boolean][]).find(([name, isActive]) => isActive)
-  }
-  function getActiveCorner(e: React.MouseEvent<HTMLElement>) {
-    if (!corners) return
-    const { x, y } = getCanvasCoordinates(e)
-    return (Object.entries(corners) as [Corner, Position][]).find(([cornerName, position]) => {
-      return (
-        x > position.x - CANVAS_MARK_SIZE &&
-        x < position.x + CANVAS_MARK_SIZE &&
-        y > position.y - CANVAS_MARK_SIZE &&
-        y < position.y + CANVAS_MARK_SIZE
-      )
-    })
-  }
-  function setSideCursor(e: React.MouseEvent<HTMLElement>) {
-    const activeSide = getActiveSide(e)
-    if (!activeSide) {
+  const onMouseDown = (e: React.MouseEvent<HTMLElement>) => {
+    const currentPosition = getCanvasCoordinates(e)
+    if (!('cornersCoords' in state.phase) || !state.phase.cornersCoords) {
+      dispatch({ type: 'DRAW_START', payload: { startPosition: currentPosition } })
       return
     }
 
-    if (activeSide[0] === 'top' || activeSide[0] === 'bottom') {
-      document.body.style.cursor = 'ns-resize'
-    } else {
-      document.body.style.cursor = 'ew-resize'
-    }
-  }
-  function setCornerCursor(e: React.MouseEvent<HTMLElement>) {
-    const activeCorner = getActiveCorner(e)
-    if (!activeCorner) return
+    const activeSide = getActiveSide(currentPosition, state.phase.cornersCoords)
+    const activeCorner = getActiveCorner(currentPosition, state.phase.cornersCoords)
 
-    switch (activeCorner[0]) {
-      case 'topLeft':
-        document.body.style.cursor = 'nwse-resize'
-        break
-      case 'topRight':
-        document.body.style.cursor = 'nesw-resize'
-        break
-      case 'bottomLeft':
-        document.body.style.cursor = 'nesw-resize'
-        break
-      case 'bottomRight':
-        document.body.style.cursor = 'nwse-resize'
-        break
-    }
-  }
-  function setCursor(e: React.MouseEvent<HTMLElement>) {
-    document.body.style.cursor = 'auto'
-    setCornerCursor(e)
-    setSideCursor(e)
-  }
-  function getOppositeCorner(currentCorner: [string, Position]) {
-    if (!corners) return
-    const { x, y } = currentCorner[1]
-    return (Object.entries(corners) as [Corner, Position][]).find(([name, position]) => {
-      return position.x !== x && position.y !== y
-    })
-  }
-
-  const onMouseDown = (e: React.MouseEvent<HTMLElement>) => {
-    setInteraction(true)
-    const ctx = canvasRef.current?.getContext('2d')
-    if (!ctx || !imageData) return
-
-    const activeSide = getActiveSide(e)
-    const activeCorner = getActiveCorner(e)
-
-    if (!activeSide && !activeCorner) {
-      setStartPoint(getCanvasCoordinates(e))
+    if (activeSide) {
+      const [side] = activeSide
+      const startPosition = getStartPosition(side, state.phase.cornersCoords)
+      dispatch({ type: 'SIDE_STRETCH_START', payload: { side, startPosition } })
       return
     }
 
     if (activeCorner) {
-      setActiveCorner(activeCorner)
-      const oppositeCorner = getOppositeCorner(activeCorner)
-      if (oppositeCorner) setStartPoint(oppositeCorner[1])
+      const [corner] = activeCorner
+      const oppositeCorner = getOppositeCornerPosition(activeCorner, state.phase.cornersCoords)
+      if (!oppositeCorner) return
+      dispatch({
+        type: 'CORNER_STRETCH_START',
+        payload: { corner, startPosition: oppositeCorner },
+      })
       return
     }
 
-    if (activeSide) {
-      const sideName = activeSide[0]
-      setActiveSide(sideName)
-
-      switch (sideName) {
-        case 'top':
-          setStartPoint(corners?.bottomLeft)
-          break
-        case 'left':
-          setStartPoint(corners?.topRight)
-          break
-        case 'bottom':
-          setStartPoint(corners?.topLeft)
-          break
-        case 'right':
-          setStartPoint(corners?.topLeft)
-          break
-      }
-    }
+    dispatch({ type: 'DRAW_START', payload: { startPosition: currentPosition } })
   }
 
   const onMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-    if (!interaction) {
-      setCursor(e)
-      return
+    const currentPosition = getCanvasCoordinates(e)
+    if (state.phase.name === 'idle' && state.phase.cornersCoords !== undefined) {
+      setCursor(currentPosition, state.phase.cornersCoords)
     }
 
-    const canvas = canvasRef.current
-    const ctx = canvas?.getContext('2d')
-    if (!canvas || !ctx || !startPoint || !imageData) return
-
-    const currentPos = getCanvasCoordinates(e)
-    const width =
-      activeSide === 'top' || activeSide === 'bottom'
-        ? Math.abs(selectionData?.width || 0)
-        : currentPos.x - startPoint.x
-    const height =
-      activeSide === 'left' || activeSide === 'right'
-        ? Math.abs(selectionData?.height || 0)
-        : currentPos.y - startPoint.y
-
-    ctx.putImageData(imageData, 0, 0)
-    ctx.strokeRect(startPoint.x, startPoint.y, width, height)
-    ctx.strokeStyle = theme.palette.primary.main
-
-    if (activeCorner) {
-      ctx.strokeStyle = '#fff'
-      ctx.setLineDash([5, 5])
-    }
-
-    ctx.lineWidth = CANVAS_LINE_WIDTH
-    setSelectionData({ x: startPoint.x, y: startPoint.y, width, height })
+    dispatch({ type: 'MOUSE_MOVE', payload: { currentPosition } })
   }
 
   const onMouseUp = () => {
-    setInteraction(false)
-    setStartPoint(undefined)
-
     const canvas = canvasRef.current
-    const ctx = canvasRef.current?.getContext('2d')
-    if (!ctx || !canvas || !imageData || !selectionData) return
-
-    ctx.putImageData(imageData, 0, 0)
-    ctx.strokeStyle = '#fff'
-    ctx.lineWidth = CANVAS_LINE_WIDTH
-    ctx.setLineDash([5, 5])
-    ctx.strokeRect(selectionData.x, selectionData.y, selectionData.width, selectionData.height)
-
-    ctx.beginPath()
-    ctx.rect(0, 0, canvas.width, canvas.height)
-    ctx.rect(selectionData.x, selectionData.y, selectionData.width, selectionData.height)
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
-    ctx.fill('evenodd')
-
-    ctx.setLineDash([])
-    ctx.fillStyle = '#fff'
-
-    const rawCorners = [
-      [selectionData.x, selectionData.y],
-      [selectionData.x + selectionData.width, selectionData.y],
-      [selectionData.x, selectionData.y + selectionData.height],
-      [selectionData.x + selectionData.width, selectionData.y + selectionData.height],
-    ]
-
-    rawCorners.forEach(([x, y]) => {
-      ctx.fillRect(x - CANVAS_MARK_SIZE / 2, y - CANVAS_MARK_SIZE / 2, CANVAS_MARK_SIZE, CANVAS_MARK_SIZE)
-    })
-
-    setCorners(namedCorners(rawCorners))
+    const ctx = canvas?.getContext('2d')
+    if (!canvas || !ctx || !imageData) return
+    dispatch({ type: 'INTERACTION_END', payload: { canvas, ctx, imageData } })
   }
 
   return (
