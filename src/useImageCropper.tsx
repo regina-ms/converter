@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useRef } from 'react'
+import React, { useEffect, useReducer, useRef, useState } from 'react'
 import { CANVAS_LINE_WIDTH, CANVAS_MARK_SIZE } from '@/constants'
 import { Action, Corner, CornersCoords, Position, PositionData, Side, SideActive, State } from '@/cropperTypes'
 import theme from '@/theme'
@@ -10,6 +10,7 @@ type ImageCropper = {
   onMouseMove: (e: React.MouseEvent<HTMLElement>) => void
   onMouseUp: () => void
   onMouseLeave: () => void
+  crop?: () => void
 }
 
 function getActiveSide(currentPosition: Position, corners: CornersCoords) {
@@ -232,22 +233,33 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-export function useImageCropper(imageSrc: string): ImageCropper {
+export function useImageCropper(initialImageSrc: string): ImageCropper {
   const dynamicCanvasRef = useRef<HTMLCanvasElement>(null)
   const staticCanvasRef = useRef<HTMLCanvasElement>(null)
   const [state, dispatch] = useReducer(reducer, { phase: { name: 'idle' } })
+  const [image, setImage] = useState<HTMLImageElement>()
 
-  useEffect(() => {
-    if (state.phase.name === 'idle' && state.selectionData) {
-      console.log({ state })
-    }
-  }, [state])
-
-  /** TODO: Обрезка фото по клику - показываем обрезок с возможностью вернуться к полному изображению */
+  /** TODO: Исправить баг из-за которого неправильно вырезается часть из уже вырезанной части (дело в useState image) */
   function crop() {
-    if (state.phase.name !== 'idle') return
-    //if()
-    return state.selectionData
+    if (!state.selectionData) return
+    const { x, y, height, width } = state.selectionData
+
+    const staticCanvas = staticCanvasRef.current
+    const dynamicCanvas = dynamicCanvasRef.current
+    const staticCtx = staticCanvas?.getContext('2d')
+    const dynamicCtx = dynamicCanvasRef.current?.getContext('2d')
+
+    if (!staticCtx || !image || !dynamicCtx || !staticCanvas || !dynamicCanvas) return
+
+    staticCtx.clearRect(0, 0, image.naturalWidth, image.naturalHeight)
+    dynamicCtx.clearRect(0, 0, image.naturalWidth, image.naturalHeight)
+
+    staticCanvas.width = width
+    staticCanvas.height = height
+    dynamicCanvas.width = width
+    dynamicCanvas.height = height
+
+    staticCtx.drawImage(image, x, y, width, height, 0, 0, width, height)
   }
 
   useEffect(() => {
@@ -257,16 +269,19 @@ export function useImageCropper(imageSrc: string): ImageCropper {
     if (!ctx || !staticCanvas || !dynamicCanvas) return
 
     const img = new Image()
-    img.src = imageSrc
+    img.src = initialImageSrc
+    setImage(img)
 
     img.onload = () => {
       staticCanvas.width = img.naturalWidth
       staticCanvas.height = img.naturalHeight
+
       dynamicCanvas.width = img.naturalWidth
       dynamicCanvas.height = img.naturalHeight
       ctx.drawImage(img, 0, 0)
     }
   }, [])
+
   useEffect(() => {
     const canvas = dynamicCanvasRef.current
     const ctx = canvas?.getContext('2d')
@@ -388,5 +403,5 @@ export function useImageCropper(imageSrc: string): ImageCropper {
 
   const onMouseLeave = () => (document.body.style.cursor = 'auto')
 
-  return { dynamicCanvasRef, staticCanvasRef, onMouseDown, onMouseLeave, onMouseMove, onMouseUp }
+  return { dynamicCanvasRef, staticCanvasRef, onMouseDown, onMouseLeave, onMouseMove, onMouseUp, crop }
 }

@@ -5,12 +5,12 @@ import { useImageCropper } from '@/useImageCropper'
 import Button from '@mui/material/Button'
 
 function Page() {
-  const { staticCanvasRef, dynamicCanvasRef, onMouseLeave, onMouseUp, onMouseMove, onMouseDown } =
+  const { staticCanvasRef, dynamicCanvasRef, onMouseLeave, onMouseUp, onMouseMove, onMouseDown, crop } =
     useImageCropper('/test-vert.jpg')
 
   return (
     <>
-      <Box position='relative' width='600px' height='90svh' display='flex' justifyContent='center'>
+      <Box position='relative' width='600px' height='90svh' display='flex' justifyContent='center' alignItems='center'>
         <canvas
           ref={staticCanvasRef}
           style={{
@@ -36,7 +36,7 @@ function Page() {
           onMouseLeave={onMouseLeave}
         ></canvas>
       </Box>
-      <Button>Обрезать</Button>
+      <Button onClick={crop}>Обрезать</Button>
     </>
   )
 }
