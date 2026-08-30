@@ -13,30 +13,36 @@ type ImageCropper = {
   imageSrc: string
 }
 
-function getActiveSide(currentPosition: Position, corners: CornersCoords) {
+type Metrics = {
+  markerSize: number
+  lineWidth: number
+}
+
+function getActiveSide(currentPosition: Position, corners: CornersCoords, metrics: Metrics) {
   const { x, y } = currentPosition
+  const { markerSize, lineWidth } = metrics
 
   const sides: SideActive = {
     left:
-      x > corners.topLeft.x - CANVAS_LINE_WIDTH &&
-      x < corners.topLeft.x + CANVAS_LINE_WIDTH &&
-      y > corners.topLeft.y + CANVAS_MARK_SIZE &&
-      y < corners.bottomLeft.y - CANVAS_MARK_SIZE,
+      x > corners.topLeft.x - lineWidth &&
+      x < corners.topLeft.x + lineWidth &&
+      y > corners.topLeft.y + markerSize &&
+      y < corners.bottomLeft.y - markerSize,
     right:
-      x > corners.topRight.x - CANVAS_LINE_WIDTH &&
-      x < corners.topRight.x + CANVAS_LINE_WIDTH &&
-      y > corners.topRight.y + CANVAS_MARK_SIZE &&
-      y < corners.bottomRight.y - CANVAS_MARK_SIZE,
+      x > corners.topRight.x - lineWidth &&
+      x < corners.topRight.x + lineWidth &&
+      y > corners.topRight.y + markerSize &&
+      y < corners.bottomRight.y - markerSize,
     top:
-      x > corners.topLeft.x + CANVAS_MARK_SIZE &&
-      x < corners.topRight.x - CANVAS_MARK_SIZE &&
-      y > corners.topLeft.y - CANVAS_LINE_WIDTH &&
-      y < corners.topLeft.y + CANVAS_LINE_WIDTH,
+      x > corners.topLeft.x + markerSize &&
+      x < corners.topRight.x - markerSize &&
+      y > corners.topLeft.y - lineWidth &&
+      y < corners.topLeft.y + lineWidth,
     bottom:
-      x > corners.bottomLeft.x + CANVAS_MARK_SIZE &&
-      x < corners.bottomRight.x - CANVAS_MARK_SIZE &&
-      y > corners.bottomLeft.y - CANVAS_LINE_WIDTH &&
-      y < corners.bottomLeft.y + CANVAS_LINE_WIDTH,
+      x > corners.bottomLeft.x + markerSize &&
+      x < corners.bottomRight.x - markerSize &&
+      y > corners.bottomLeft.y - lineWidth &&
+      y < corners.bottomLeft.y + lineWidth,
   }
 
   return (Object.entries(sides) as [Side, boolean][]).find(([name, isActive]) => isActive)
@@ -53,19 +59,19 @@ function getStartPosition(side: Side, corners: CornersCoords): Position {
       return corners.topLeft
   }
 }
-function getActiveCorner(currentPosition: Position, corners: CornersCoords) {
+function getActiveCorner(currentPosition: Position, corners: CornersCoords, markerSize: number) {
   const { x, y } = currentPosition
   return (Object.entries(corners) as [Corner, Position][]).find(([cornerName, position]) => {
     return (
-      x > position.x - CANVAS_MARK_SIZE &&
-      x < position.x + CANVAS_MARK_SIZE &&
-      y > position.y - CANVAS_MARK_SIZE &&
-      y < position.y + CANVAS_MARK_SIZE
+      x > position.x - markerSize &&
+      x < position.x + markerSize &&
+      y > position.y - markerSize &&
+      y < position.y + markerSize
     )
   })
 }
-function setSideCursor(currentPosition: Position, corners: CornersCoords) {
-  const activeSide = getActiveSide(currentPosition, corners)
+function setSideCursor(currentPosition: Position, corners: CornersCoords, metrics: Metrics) {
+  const activeSide = getActiveSide(currentPosition, corners, metrics)
   if (!activeSide) {
     return
   }
@@ -76,8 +82,8 @@ function setSideCursor(currentPosition: Position, corners: CornersCoords) {
     document.body.style.cursor = 'ew-resize'
   }
 }
-function setCornerCursor(currentPosition: Position, corners: CornersCoords) {
-  const activeCorner = getActiveCorner(currentPosition, corners)
+function setCornerCursor(currentPosition: Position, corners: CornersCoords, markerSize: number) {
+  const activeCorner = getActiveCorner(currentPosition, corners, markerSize)
   if (!activeCorner) return
 
   switch (activeCorner[0]) {
@@ -95,10 +101,10 @@ function setCornerCursor(currentPosition: Position, corners: CornersCoords) {
       break
   }
 }
-function setCursor(currentPosition: Position, corners: CornersCoords) {
+function setCursor(currentPosition: Position, corners: CornersCoords, metrics: Metrics) {
   document.body.style.cursor = 'auto'
-  setCornerCursor(currentPosition, corners)
-  setSideCursor(currentPosition, corners)
+  setCornerCursor(currentPosition, corners, metrics.markerSize)
+  setSideCursor(currentPosition, corners, metrics)
 }
 function getOppositeCornerPosition(currentCorner: [string, Position], corners: CornersCoords) {
   const { x, y } = currentCorner[1]
@@ -281,11 +287,18 @@ function interaction(state: State, action: Action): State {
   }
 }
 
+/* TODO:
+    * функции для кнопок Вернуть и Обрезать должны появляться только при определенных обстоятельствах, они не должны быть доступны всегда
+    * разобраться с URL.revokeObjectURL и requestAnimationFrame
+    * */
+
+
 export function useImageCropper(initialImageSrc: string): ImageCropper {
   const dynamicCanvasRef = useRef<HTMLCanvasElement>(null)
   const staticCanvasRef = useRef<HTMLCanvasElement>(null)
   const [state, dispatch] = useReducer(interaction, { phase: { name: 'idle' } })
   const [imageSrc, setImageSrc] = useState<string>(initialImageSrc)
+  const [metrics, setMetrics] = useState<Metrics>({ markerSize: 0, lineWidth: 0 })
 
   function updateImage(setInitial?: boolean) {
     const staticCanvas = staticCanvasRef.current
@@ -320,6 +333,16 @@ export function useImageCropper(initialImageSrc: string): ImageCropper {
         staticCtx.drawImage(image, 0, 0)
       }
 
+      setMetrics((prev) => {
+        if (!dynamicCanvasRef.current) {
+          return prev
+        }
+        return {
+          markerSize: getCanvasObjectSize(dynamicCanvasRef.current, CANVAS_MARK_SIZE),
+          lineWidth: getCanvasObjectSize(dynamicCanvasRef.current, CANVAS_LINE_WIDTH),
+        }
+      })
+
       staticCanvas.toBlob((blob) => {
         if (!blob) return
         setImageSrc(URL.createObjectURL(blob))
@@ -333,13 +356,12 @@ export function useImageCropper(initialImageSrc: string): ImageCropper {
   }, [])
 
   useEffect(() => {
-    console.log({ state })
     const canvas = dynamicCanvasRef.current
     const ctx = canvas?.getContext('2d')
     if (!canvas || !ctx) return
 
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.lineWidth = getCanvasObjectSize(canvas, CANVAS_LINE_WIDTH)
+    ctx.lineWidth = metrics.lineWidth
 
     if (state.phase.name !== 'idle' && state.selectionData) {
       ctx.strokeStyle = state.phase.name === 'drawing' ? theme.palette.primary.main : '#fff'
@@ -376,10 +398,10 @@ export function useImageCropper(initialImageSrc: string): ImageCropper {
 
       Object.values(state.phase.cornersCoords).forEach((position) => {
         ctx.fillRect(
-          position.x - getCanvasObjectSize(canvas, CANVAS_MARK_SIZE) / 2,
-          position.y - getCanvasObjectSize(canvas, CANVAS_MARK_SIZE) / 2,
-          getCanvasObjectSize(canvas, CANVAS_MARK_SIZE),
-          getCanvasObjectSize(canvas, CANVAS_MARK_SIZE),
+          position.x - metrics.markerSize / 2,
+          position.y - metrics.markerSize / 2,
+          metrics.markerSize,
+          metrics.markerSize,
         )
       })
     }
@@ -391,8 +413,8 @@ export function useImageCropper(initialImageSrc: string): ImageCropper {
     const currentPosition = getCanvasCoordinates(e)
 
     if ('cornersCoords' in state.phase && state.phase.cornersCoords) {
-      const activeSide = getActiveSide(currentPosition, state.phase.cornersCoords)
-      const activeCorner = getActiveCorner(currentPosition, state.phase.cornersCoords)
+      const activeSide = getActiveSide(currentPosition, state.phase.cornersCoords, metrics)
+      const activeCorner = getActiveCorner(currentPosition, state.phase.cornersCoords, metrics.markerSize)
 
       if (activeSide) {
         const [side] = activeSide
@@ -420,7 +442,7 @@ export function useImageCropper(initialImageSrc: string): ImageCropper {
     const currentPosition = getCanvasCoordinates(e)
 
     if (state.phase.name === 'idle' && state.phase.cornersCoords) {
-      setCursor(currentPosition, state.phase.cornersCoords)
+      setCursor(currentPosition, state.phase.cornersCoords, metrics)
       return
     }
 
@@ -431,21 +453,27 @@ export function useImageCropper(initialImageSrc: string): ImageCropper {
   }
 
   const onPointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    /* TODO: минимальная фигура не должна выходить за рамки изображения */
-    if (state.selectionData) {
-      const width = Math.max(state.selectionData.width, getCanvasObjectSize(e.currentTarget, MIN_CROP_SIZE))
-      const height = Math.max(state.selectionData.height, getCanvasObjectSize(e.currentTarget, MIN_CROP_SIZE))
-      dispatch({ type: 'INTERACTION_END', payload: { selectionData: { ...state.selectionData, width, height } } })
-    } else {
-      const minSelectionData = {
-        x: getCanvasCoordinates(e).x,
-        y: getCanvasCoordinates(e).y,
-        width: getCanvasObjectSize(e.currentTarget, MIN_CROP_SIZE),
-        height: getCanvasObjectSize(e.currentTarget, MIN_CROP_SIZE),
-      }
-      console.log({ canvas: { width: e.currentTarget.width, height: e.currentTarget.height }, minSize:getCanvasObjectSize(e.currentTarget, MIN_CROP_SIZE), minSelectionData })
-      dispatch({ type: 'INTERACTION_END', payload: { selectionData: minSelectionData } })
-    }
+    const canvas = e.currentTarget
+    const x = state.selectionData?.x || getCanvasCoordinates(e).x
+    const y = state.selectionData?.y || getCanvasCoordinates(e).y
+
+    const width = state.selectionData?.width || getCanvasObjectSize(canvas, MIN_CROP_SIZE)
+    const height = state.selectionData?.height || getCanvasObjectSize(canvas, MIN_CROP_SIZE)
+
+    const directionX = x + width > canvas.width ? -1 : 1
+    const directionY = y + height > canvas.height ? -1 : 1
+
+    dispatch({
+      type: 'INTERACTION_END',
+      payload: {
+        selectionData: {
+          width: width * directionX,
+          height: height * directionY,
+          x,
+          y,
+        },
+      },
+    })
   }
 
   return {
