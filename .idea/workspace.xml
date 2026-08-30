@@ -4,10 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="33083298-c0fd-43ba-bae4-0ff33fd7352a" name="Changes" comment="update node modules">
-      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pnpm-lock.yaml" beforeDir="false" />
+    <list default="true" id="33083298-c0fd-43ba-bae4-0ff33fd7352a" name="Changes" comment="update pnpm">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/next.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/next.config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/canvas/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/canvas/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/constants.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/constants.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/cropperTypes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/cropperTypes.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/useImageCropper.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/useImageCropper.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -105,7 +108,7 @@
       <recent name="C:\projects\converter\src" />
     </key>
   </component>
-  <component name="RunManager" selected="Docker.Dockerfile">
+  <component name="RunManager" selected="npm.dev">
     <configuration name="Next.js: debug client-side" type="JavascriptDebugType" uri="http://localhost:3000/">
       <method v="2" />
     </configuration>
@@ -151,9 +154,9 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="npm.dev" />
         <item itemvalue="Docker.Dockerfile" />
         <item itemvalue="npm.build" />
-        <item itemvalue="npm.dev" />
       </list>
     </recent_temporary>
   </component>
@@ -469,7 +472,15 @@
       <option name="project" value="LOCAL" />
       <updated>1786788846471</updated>
     </task>
-    <option name="localTasksCounter" value="38" />
+    <task id="LOCAL-00038" summary="update pnpm">
+      <option name="closed" value="true" />
+      <created>1786883539931</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1786883539931</updated>
+    </task>
+    <option name="localTasksCounter" value="39" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -487,7 +498,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: show existing user images" />
     <MESSAGE value="update pnpm-lock" />
     <MESSAGE value="update pnpm-lock and dockerfile" />
     <MESSAGE value="change color" />
@@ -512,6 +522,7 @@
     <MESSAGE value="refactor: useImageCropper" />
     <MESSAGE value="feature: crop function" />
     <MESSAGE value="update node modules" />
-    <option name="LAST_COMMIT_MESSAGE" value="update node modules" />
+    <MESSAGE value="update pnpm" />
+    <option name="LAST_COMMIT_MESSAGE" value="update pnpm" />
   </component>
 </project>

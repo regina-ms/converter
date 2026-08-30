@@ -31,5 +31,6 @@ export type Action =
   | { type: 'DRAW_START'; payload: { startPosition: Position } }
   | { type: 'CORNER_STRETCH_START'; payload: { corner: Corner; startPosition: Position } }
   | { type: 'SIDE_STRETCH_START'; payload: { side: Side; startPosition: Position } }
-  | { type: 'MOUSE_MOVE'; payload: { currentPosition: Position } }
-  | { type: 'INTERACTION_END' }
+  | { type: 'INTERACTION_MOVE'; payload: { currentPosition: Position } }
+  | { type: 'INTERACTION_END'; payload: { selectionData: PositionData } }
+  | { type: 'CROP' }

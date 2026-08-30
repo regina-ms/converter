@@ -1,16 +1,16 @@
 import React, { useEffect, useReducer, useRef, useState } from 'react'
-import { CANVAS_LINE_WIDTH, CANVAS_MARK_SIZE } from '@/constants'
+import { CANVAS_LINE_WIDTH, CANVAS_MARK_SIZE, MIN_CROP_SIZE } from '@/constants'
 import { Action, Corner, CornersCoords, Position, PositionData, Side, SideActive, State } from '@/cropperTypes'
 import theme from '@/theme'
 
 type ImageCropper = {
   staticCanvasRef: React.RefObject<HTMLCanvasElement>
   dynamicCanvasRef: React.RefObject<HTMLCanvasElement>
-  onMouseDown: (e: React.MouseEvent<HTMLElement>) => void
-  onMouseMove: (e: React.MouseEvent<HTMLElement>) => void
-  onMouseUp: () => void
-  onMouseLeave: () => void
-  crop?: () => void
+  onPointerDown: (e: React.PointerEvent<HTMLCanvasElement>) => void
+  onPointerMove: (e: React.PointerEvent<HTMLCanvasElement>) => void
+  onPointerUp: (e: React.PointerEvent<HTMLCanvasElement>) => void
+  updateImage: (setInitial?: boolean) => void
+  imageSrc: string
 }
 
 function getActiveSide(currentPosition: Position, corners: CornersCoords) {
@@ -126,10 +126,31 @@ function namedCorners(rawCorners: number[][], selectionData: PositionData) {
     },
   }
 }
+function getCanvasCoordinates(e: React.PointerEvent<HTMLCanvasElement>) {
+  const canvas = e.currentTarget
 
-function reducer(state: State, action: Action): State {
-  let width: number
-  let height: number
+  const rect = canvas.getBoundingClientRect()
+  const scaleX = canvas.width / rect.width
+  const scaleY = canvas.height / rect.height
+
+  const raw = {
+    x: (e.clientX - rect.left) * scaleX,
+    y: (e.clientY - rect.top) * scaleY,
+  }
+
+  return {
+    x: Math.min(canvas.width, Math.max(0, raw.x)),
+    y: Math.min(canvas.height, Math.max(0, raw.y)),
+  }
+}
+function getCanvasObjectSize(canvas: HTMLCanvasElement, value: number) {
+  const rect = canvas.getBoundingClientRect()
+  return value * (canvas.width / rect.width)
+}
+
+function interaction(state: State, action: Action): State {
+  let width = state.selectionData?.width
+  let height = state.selectionData?.height
 
   switch (action.type) {
     case 'SIDE_STRETCH_START':
@@ -137,17 +158,20 @@ function reducer(state: State, action: Action): State {
 
       width = state.phase.cornersCoords.topRight.x - state.phase.cornersCoords.topLeft.x
       height = state.phase.cornersCoords.bottomLeft.y - state.phase.cornersCoords.topLeft.y
+
       if (action.payload.side === 'top' || action.payload.side === 'bottom') {
         height =
           (action.payload.side === 'top'
             ? state.phase.cornersCoords.topLeft.y
             : state.phase.cornersCoords.bottomLeft.y) - action.payload.startPosition.y
       } else {
-        width =
-          (action.payload.side === 'left'
-            ? state.phase.cornersCoords.topLeft.x
-            : state.phase.cornersCoords.topRight.x) - action.payload.startPosition.x
+        if (action.payload.side === 'left')
+          width =
+            (action.payload.side === 'left'
+              ? state.phase.cornersCoords.topLeft.x
+              : state.phase.cornersCoords.topRight.x) - action.payload.startPosition.x
       }
+
       return {
         ...state,
         phase: {
@@ -181,7 +205,7 @@ function reducer(state: State, action: Action): State {
           height: cornerPos.y - action.payload.startPosition.y,
         },
       }
-    case 'MOUSE_MOVE':
+    case 'INTERACTION_MOVE':
       if (state.phase.name === 'idle') {
         return state
       }
@@ -191,10 +215,10 @@ function reducer(state: State, action: Action): State {
 
       if (state.phase.name === 'stretchingSide') {
         if (state.phase.side === 'top' || state.phase.side === 'bottom') {
-          width = Math.abs(state.selectionData?.width || 0)
+          width = state.selectionData?.width || 0
         }
         if (state.phase.side === 'left' || state.phase.side === 'right') {
-          height = Math.abs(state.selectionData?.height || 0)
+          height = state.selectionData?.height || 0
         }
       }
 
@@ -212,22 +236,46 @@ function reducer(state: State, action: Action): State {
         selectionData: undefined,
       }
     case 'INTERACTION_END':
-      if (!state.selectionData) return state
+      let selectionData: PositionData = action.payload.selectionData
+
       const rawCorners = [
-        [state.selectionData.x, state.selectionData.y],
-        [state.selectionData.x + state.selectionData.width, state.selectionData.y],
-        [state.selectionData.x, state.selectionData.y + state.selectionData.height],
-        [state.selectionData.x + state.selectionData.width, state.selectionData.y + state.selectionData.height],
+        [selectionData.x, selectionData.y],
+        [selectionData.x + selectionData.width, selectionData.y],
+        [selectionData.x, selectionData.y + selectionData.height],
+        [selectionData.x + selectionData.width, selectionData.y + selectionData.height],
       ]
+
+      let { x, y } = selectionData
+
+      if (selectionData.height < 0) {
+        y = selectionData.y + selectionData.height
+      }
+
+      if (selectionData.width < 0) {
+        x = selectionData.x + selectionData.width
+      }
 
       return {
         ...state,
         phase: {
           name: 'idle',
-          cornersCoords: namedCorners(rawCorners, state.selectionData),
+          cornersCoords: namedCorners(rawCorners, selectionData),
+        },
+        selectionData: {
+          width: Math.abs(selectionData.width),
+          height: Math.abs(selectionData.height),
+          y,
+          x,
         },
       }
-
+    case 'CROP':
+      return {
+        ...state,
+        phase: {
+          name: 'idle',
+        },
+        selectionData: undefined,
+      }
     default:
       return state
   }
@@ -236,63 +284,68 @@ function reducer(state: State, action: Action): State {
 export function useImageCropper(initialImageSrc: string): ImageCropper {
   const dynamicCanvasRef = useRef<HTMLCanvasElement>(null)
   const staticCanvasRef = useRef<HTMLCanvasElement>(null)
-  const [state, dispatch] = useReducer(reducer, { phase: { name: 'idle' } })
-  const [image, setImage] = useState<HTMLImageElement>()
+  const [state, dispatch] = useReducer(interaction, { phase: { name: 'idle' } })
+  const [imageSrc, setImageSrc] = useState<string>(initialImageSrc)
 
-  /** TODO: Исправить баг из-за которого неправильно вырезается часть из уже вырезанной части (дело в useState image) */
-  function crop() {
-    if (!state.selectionData) return
-    const { x, y, height, width } = state.selectionData
-
+  function updateImage(setInitial?: boolean) {
     const staticCanvas = staticCanvasRef.current
     const dynamicCanvas = dynamicCanvasRef.current
     const staticCtx = staticCanvas?.getContext('2d')
-    const dynamicCtx = dynamicCanvasRef.current?.getContext('2d')
 
-    if (!staticCtx || !image || !dynamicCtx || !staticCanvas || !dynamicCanvas) return
+    if (!staticCtx || !staticCanvas || !dynamicCanvas) return
 
-    staticCtx.clearRect(0, 0, image.naturalWidth, image.naturalHeight)
-    dynamicCtx.clearRect(0, 0, image.naturalWidth, image.naturalHeight)
+    const image = new Image()
+    image.src = setInitial ? initialImageSrc : imageSrc
 
-    staticCanvas.width = width
-    staticCanvas.height = height
-    dynamicCanvas.width = width
-    dynamicCanvas.height = height
+    image.onload = () => {
+      staticCanvas.width = state.selectionData?.width || image.naturalWidth
+      staticCanvas.height = state.selectionData?.height || image.naturalHeight
 
-    staticCtx.drawImage(image, x, y, width, height, 0, 0, width, height)
+      dynamicCanvas.width = state.selectionData?.width || image.naturalWidth
+      dynamicCanvas.height = state.selectionData?.height || image.naturalHeight
+
+      if (state.selectionData) {
+        staticCtx.drawImage(
+          image,
+          state.selectionData.x,
+          state.selectionData.y,
+          state.selectionData.width,
+          state.selectionData.height,
+          0,
+          0,
+          state.selectionData.width,
+          state.selectionData.height,
+        )
+      } else {
+        staticCtx.drawImage(image, 0, 0)
+      }
+
+      staticCanvas.toBlob((blob) => {
+        if (!blob) return
+        setImageSrc(URL.createObjectURL(blob))
+      })
+      dispatch({ type: 'CROP' })
+    }
   }
 
   useEffect(() => {
-    const staticCanvas = staticCanvasRef.current
-    const ctx = staticCanvasRef.current?.getContext('2d')
-    const dynamicCanvas = dynamicCanvasRef.current
-    if (!ctx || !staticCanvas || !dynamicCanvas) return
-
-    const img = new Image()
-    img.src = initialImageSrc
-    setImage(img)
-
-    img.onload = () => {
-      staticCanvas.width = img.naturalWidth
-      staticCanvas.height = img.naturalHeight
-
-      dynamicCanvas.width = img.naturalWidth
-      dynamicCanvas.height = img.naturalHeight
-      ctx.drawImage(img, 0, 0)
-    }
+    updateImage(true)
   }, [])
 
   useEffect(() => {
+    console.log({ state })
     const canvas = dynamicCanvasRef.current
     const ctx = canvas?.getContext('2d')
     if (!canvas || !ctx) return
 
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.lineWidth = getCanvasObjectSize(canvas, CANVAS_LINE_WIDTH)
+
     if (state.phase.name !== 'idle' && state.selectionData) {
       ctx.strokeStyle = state.phase.name === 'drawing' ? theme.palette.primary.main : '#fff'
-      if (state.phase.name === 'drawing') ctx.setLineDash([5, 5])
+      if (state.phase.name === 'drawing')
+        ctx.setLineDash([getCanvasObjectSize(canvas, 5), getCanvasObjectSize(canvas, 5)])
 
-      ctx.lineWidth = CANVAS_LINE_WIDTH
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
       ctx.strokeRect(
         state.phase.startPosition.x,
         state.phase.startPosition.y,
@@ -303,10 +356,8 @@ export function useImageCropper(initialImageSrc: string): ImageCropper {
     }
 
     if (state.phase.name === 'idle' && state.selectionData && state.phase.cornersCoords) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
       ctx.strokeStyle = '#fff'
-      ctx.lineWidth = CANVAS_LINE_WIDTH
-      ctx.setLineDash([5, 5])
+      ctx.setLineDash([getCanvasObjectSize(canvas, 5), getCanvasObjectSize(canvas, 5)])
       ctx.strokeRect(
         state.selectionData.x,
         state.selectionData.y,
@@ -325,83 +376,85 @@ export function useImageCropper(initialImageSrc: string): ImageCropper {
 
       Object.values(state.phase.cornersCoords).forEach((position) => {
         ctx.fillRect(
-          position.x - CANVAS_MARK_SIZE / 2,
-          position.y - CANVAS_MARK_SIZE / 2,
-          CANVAS_MARK_SIZE,
-          CANVAS_MARK_SIZE,
+          position.x - getCanvasObjectSize(canvas, CANVAS_MARK_SIZE) / 2,
+          position.y - getCanvasObjectSize(canvas, CANVAS_MARK_SIZE) / 2,
+          getCanvasObjectSize(canvas, CANVAS_MARK_SIZE),
+          getCanvasObjectSize(canvas, CANVAS_MARK_SIZE),
         )
       })
     }
   }, [state])
 
-  function getCanvasCoordinates(e: React.MouseEvent<HTMLElement>) {
-    const canvas = dynamicCanvasRef.current
-
-    if (!canvas) return { x: 0, y: 0 }
-
-    const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
-
-    return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY,
-    }
-  }
-
-  const onMouseDown = (e: React.MouseEvent<HTMLElement>) => {
+  const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (e.button !== 0) return
+    e.currentTarget.setPointerCapture(e.pointerId)
     const currentPosition = getCanvasCoordinates(e)
 
-    if (state.phase.name !== 'idle') return
-    if (!state.phase.cornersCoords) {
-      dispatch({ type: 'DRAW_START', payload: { startPosition: currentPosition } })
-      return
+    if ('cornersCoords' in state.phase && state.phase.cornersCoords) {
+      const activeSide = getActiveSide(currentPosition, state.phase.cornersCoords)
+      const activeCorner = getActiveCorner(currentPosition, state.phase.cornersCoords)
+
+      if (activeSide) {
+        const [side] = activeSide
+        const startPosition = getStartPosition(side, state.phase.cornersCoords)
+
+        dispatch({ type: 'SIDE_STRETCH_START', payload: { side, startPosition } })
+        return
+      }
+      if (activeCorner) {
+        const [corner] = activeCorner
+        const oppositeCorner = getOppositeCornerPosition(activeCorner, state.phase.cornersCoords)
+        if (!oppositeCorner) return
+        dispatch({
+          type: 'CORNER_STRETCH_START',
+          payload: { corner, startPosition: oppositeCorner },
+        })
+        return
+      }
     }
 
-    const activeSide = getActiveSide(currentPosition, state.phase.cornersCoords)
-    const activeCorner = getActiveCorner(currentPosition, state.phase.cornersCoords)
-
-    if (!activeCorner && !activeSide) {
-      dispatch({ type: 'DRAW_START', payload: { startPosition: currentPosition } })
-      return
-    }
-
-    if (activeSide) {
-      const [side] = activeSide
-      const startPosition = getStartPosition(side, state.phase.cornersCoords)
-      dispatch({ type: 'SIDE_STRETCH_START', payload: { side, startPosition } })
-      return
-    }
-
-    if (activeCorner) {
-      const [corner] = activeCorner
-      const oppositeCorner = getOppositeCornerPosition(activeCorner, state.phase.cornersCoords)
-      if (!oppositeCorner) return
-      dispatch({
-        type: 'CORNER_STRETCH_START',
-        payload: { corner, startPosition: oppositeCorner },
-      })
-      return
-    }
+    dispatch({ type: 'DRAW_START', payload: { startPosition: currentPosition } })
   }
 
-  const onMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+  const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const currentPosition = getCanvasCoordinates(e)
-    if (state.phase.name === 'idle' && state.phase.cornersCoords !== undefined) {
+
+    if (state.phase.name === 'idle' && state.phase.cornersCoords) {
       setCursor(currentPosition, state.phase.cornersCoords)
+      return
     }
 
-    dispatch({ type: 'MOUSE_MOVE', payload: { currentPosition } })
+    dispatch({
+      type: 'INTERACTION_MOVE',
+      payload: { currentPosition },
+    })
   }
 
-  const onMouseUp = () => {
-    const canvas = dynamicCanvasRef.current
-    const ctx = canvas?.getContext('2d')
-    if (!canvas || !ctx) return
-    dispatch({ type: 'INTERACTION_END' })
+  const onPointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    /* TODO: минимальная фигура не должна выходить за рамки изображения */
+    if (state.selectionData) {
+      const width = Math.max(state.selectionData.width, getCanvasObjectSize(e.currentTarget, MIN_CROP_SIZE))
+      const height = Math.max(state.selectionData.height, getCanvasObjectSize(e.currentTarget, MIN_CROP_SIZE))
+      dispatch({ type: 'INTERACTION_END', payload: { selectionData: { ...state.selectionData, width, height } } })
+    } else {
+      const minSelectionData = {
+        x: getCanvasCoordinates(e).x,
+        y: getCanvasCoordinates(e).y,
+        width: getCanvasObjectSize(e.currentTarget, MIN_CROP_SIZE),
+        height: getCanvasObjectSize(e.currentTarget, MIN_CROP_SIZE),
+      }
+      console.log({ canvas: { width: e.currentTarget.width, height: e.currentTarget.height }, minSize:getCanvasObjectSize(e.currentTarget, MIN_CROP_SIZE), minSelectionData })
+      dispatch({ type: 'INTERACTION_END', payload: { selectionData: minSelectionData } })
+    }
   }
 
-  const onMouseLeave = () => (document.body.style.cursor = 'auto')
-
-  return { dynamicCanvasRef, staticCanvasRef, onMouseDown, onMouseLeave, onMouseMove, onMouseUp, crop }
+  return {
+    dynamicCanvasRef,
+    staticCanvasRef,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    updateImage,
+    imageSrc,
+  }
 }
